@@ -64,7 +64,7 @@ model LostItem {
   location    String
   foundDate   DateTime
   status      LostStatus
-  imageUrl    String?
+  img         String?
   studentId   Int
   student     Student    @relation(fields: [studentId], references: [id])
   teacherId   Int?
@@ -79,8 +79,8 @@ model ItemType {
   id        Int        @id @default(autoincrement())
   typeName  String
   lostItems LostItem[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 enum LostStatus {

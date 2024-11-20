@@ -90,7 +90,7 @@ async function main() {
         location: `Location${i}`,
         foundDate: new Date(),
         status: LostStatus.FOUND,
-        imageUrl: "/imageFound.png",
+        img: "/images/imageFound.png",
         studentId: Math.floor(Math.random() * 30) + 1,
         teacherId: Math.floor(Math.random() * 10) + 1,
         userId: Math.floor(Math.random() * 2) + 1, // Assign to Admin user
