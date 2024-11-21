@@ -6,12 +6,13 @@ export const ROOT = "/";
 
 export const PUBLIC_ROUTES = [
   "/login",
-  "/itemLost"
+  "/lostItem(.*)",
 ];
 
 export const PROTECTED_SUB_ROUTES = [
-  "/dashboard(.*)",
-  "/student(.*)",
-  "/teacher(.*)",
-  "/lostItems",
+  "/admin/dashboard(.*)",
+  "/admin/students(.*)",
+  "/admin/teachers(.*)",
+  "/admin/itemTypes(.*)",
+  "/admin/lostItems",
 ];

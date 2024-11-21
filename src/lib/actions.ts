@@ -8,10 +8,18 @@ import {
   StudentSchema,
   TeacherSchema,
 } from "./formValidationSchemas";
-import prisma from "./prisma";
+
 import { mkdir, unlink, writeFile } from "fs/promises";
 import { promises as fs } from "fs";
 import { ItemType, LostItem, Prisma } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { error } from "console";
+import { verifyPassword } from "./helper";
+import { AuthError } from "next-auth";
+import { signIn, signOut } from "../auth";
+import prisma from "./prisma";
+// import { prisma } from "@/lib/prisma";
+
 
 // type CurrentState = { success: boolean; error: boolean };
 
@@ -660,7 +668,6 @@ export const createLostItem = async (data: LostItemSchema) => {
         teacherId: data.teacherId,
         userId: data.userId,
       },
-
     });
 
     return { success: true, error: false };
@@ -788,7 +795,6 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
   }
 };
 
-
 export const deleteLostItem = async (data: FormData) => {
   const id = data.get("id");
 
@@ -834,3 +840,60 @@ export const deleteLostItem = async (data: FormData) => {
 };
 
 ////////////////////////////////////////////////////// End Lost Item //////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////// Users //////////////////////////////////////////////////////
+export const logIn = async (formData: FormData) => {
+  const rawLogIn = {
+    username: formData.get("userName"),
+    password: formData.get("password"),
+    redirectTo: "/", // /admin/dashboard
+  };
+
+  // Get User
+  const existingUser = await prisma.user.findUnique({
+    where: { username: rawLogIn.username as string },
+  });
+
+  // console.log("existingUser => ", existingUser);
+
+  // Check User
+  if (existingUser === null) {
+    return { error: "Invalid username or password" };
+  }
+
+  // Check Password
+  if (!verifyPassword(rawLogIn.password, existingUser.password)) {
+    return { error: "Invalid username or password" };
+  }
+  // console.log("Check Password Pass");
+
+  try {
+    const loginResult = await signIn("credentials", {
+      redirect: false,
+      username: rawLogIn.username,
+      password: rawLogIn.password,
+    });
+    console.log("loginResult => ", loginResult);
+    if(!loginResult){
+      return {error: "Invalid username or password"}
+    }
+  } catch (err: any) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return { error: "Invalid credentials!" };
+        default:
+          return { error: `${error.type}` };
+      }
+    }
+    
+    throw error;
+  }
+  revalidatePath("/");
+};
+
+export const logOut = async () => {
+  await signOut({ redirectTo: "/login" });
+  // revalidatePath("/login");
+};
+////////////////////////////////////////////////////// End Users //////////////////////////////////////////////////////

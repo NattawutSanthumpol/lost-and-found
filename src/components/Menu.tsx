@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "@prisma/client";
-import { role } from "@/lib/data";
+import { auth } from "@/auth";
 
 const menuItems = [
   {
@@ -43,11 +43,20 @@ const menuItems = [
         href: "/admin/Users",
         visible: [UserRole.ADMIN.toString()],
       },
+      {
+        icon: "/images/other/profile.png",
+        label: "Lost Items",
+        href: "/lostItem",
+        visible: ["GUEST",UserRole.ADMIN.toString(), UserRole.TEACHER.toString()],
+      }
     ]
   }
 ]
 
 const Menu = async () => {
+  const session = await auth();
+  const role = session?.user.role || "GUEST";
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
