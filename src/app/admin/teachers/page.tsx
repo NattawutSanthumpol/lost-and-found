@@ -1,8 +1,8 @@
+import { auth } from "@/auth";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma, Teacher, UserRole } from "@prisma/client";
@@ -15,6 +15,10 @@ const TeacherListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
   const params = await searchParams;
+
+  const session = await auth();
+  const role = session?.user.role;
+
   const columns = [
     {
       header: "Info",

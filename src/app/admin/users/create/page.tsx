@@ -1,16 +1,16 @@
 "use client";
 
-import { teacherSchema, TeacherSchema } from "@/lib/formValidationSchemas";
+import { userSchema, UserSchema } from "@/lib/formValidationSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
-import { createTeacher } from "@/lib/actions";
+import { createUser } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Link from "next/link";
 
-const CreateTeacherPage = () => {
+const CreateuserPage = () => {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [image, setImage] = useState<string>("");
@@ -19,25 +19,25 @@ const CreateTeacherPage = () => {
         register,
         handleSubmit,
         formState: { errors },
-    } = useForm<TeacherSchema>({
-        resolver: zodResolver(teacherSchema),
+    } = useForm<UserSchema>({
+        resolver: zodResolver(userSchema),
     });
 
-    const onSubmit = async (data: TeacherSchema) => {
+    const onSubmit = async (data: UserSchema) => {
         // console.log(data);
         setIsSubmitting(true);
-        const result = await createTeacher({ ...data, img: image });
+        const result = await createUser({ ...data, img: image });
         console.log("result => ", result);
         setIsSubmitting(false);
 
         if (result.success) {
-            toast.success("Teacher created successfully!");
-            router.push("/admin/teachers");
+            toast.success("user created successfully!");
+            router.push("/admin/users");
             router.refresh();
         } else if (result.error) {
             toast.error(result.message);
         } else {
-            toast.error("Failed to create teacher. Please try again.");
+            toast.error("Failed to create user. Please try again.");
         }
     };
 
@@ -61,7 +61,7 @@ const CreateTeacherPage = () => {
             <div className="container mx-auto p-4">
                 {/* Header */}
                 <h1 className="text-center text-3xl font-bold mb-6">
-                    Create a new teacher
+                    Create a new user
                 </h1>
 
                 {/* Form */}
@@ -97,7 +97,49 @@ const CreateTeacherPage = () => {
                     {/* Column 2: Form Fields */}
                     <div>
                         <div className="mb-4">
-                            <label className="block text-sm font-medium">First Name</label>
+                            <label className="block text-sm font-medium">User Name<span className="text-red-600 text-lg">*</span></label>
+                            <input
+                                {...register("username")}
+                                className="w-full p-2 border rounded"
+                            />
+                            {errors.username && (
+                                <span className="text-red-500 text-sm">
+                                    {errors.username.message}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium">Password<span className="text-red-600 text-lg">*</span></label>
+                            <input
+                                {...register("password")}
+                                type="password"
+                                className="w-full p-2 border rounded"
+                            />
+                            {errors.password && (
+                                <span className="text-red-500 text-sm">
+                                    {errors.password.message}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium">Confirm Password<span className="text-red-600 text-lg">*</span></label>
+                            <input
+                                {...register("confirmPassword")}
+                                type="password"
+                                className="w-full p-2 border rounded"
+                            />
+                            {errors.confirmPassword && (
+                                <span className="text-red-500 text-sm">
+                                    {errors.confirmPassword.message}
+                                </span>
+                            )}
+                        </div>
+
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium">First Name<span className="text-red-600 text-lg">*</span></label>
                             <input
                                 {...register("firstName")}
                                 className="w-full p-2 border rounded"
@@ -110,7 +152,7 @@ const CreateTeacherPage = () => {
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium">Last Name</label>
+                            <label className="block text-sm font-medium">Last Name<span className="text-red-600 text-lg">*</span></label>
                             <input
                                 {...register("lastName")}
                                 className="w-full p-2 border rounded"
@@ -123,7 +165,7 @@ const CreateTeacherPage = () => {
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium">Email</label>
+                            <label className="block text-sm font-medium">Email<span className="text-red-600 text-lg">*</span></label>
                             <input
                                 type="email"
                                 {...register("email")}
@@ -165,6 +207,22 @@ const CreateTeacherPage = () => {
                             )}
                         </div>
 
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium">Role</label>
+                            <select
+                                {...register("role")}
+                                className="w-full p-2 border rounded"
+                            >
+                                <option value="ADMIN">Admin</option>
+                                <option value="TEACHER">Teacher</option>
+                            </select>
+                            {errors.role && (
+                                <span className="text-red-500 text-sm">
+                                    {errors.role.message}
+                                </span>
+                            )}
+                        </div>
+
                         <div className="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-2">
                             <button
                                 type="submit"
@@ -173,7 +231,7 @@ const CreateTeacherPage = () => {
                             >
                                 {isSubmitting ? "Saving..." : "Create"}
                             </button>
-                            <Link href={`/admin/teachers`}>
+                            <Link href={`/admin/users`}>
                                 <button
                                     type="button"
                                     className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
@@ -189,4 +247,4 @@ const CreateTeacherPage = () => {
     );
 };
 
-export default CreateTeacherPage;
+export default CreateuserPage;

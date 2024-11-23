@@ -11,7 +11,7 @@ const Form = ({
   setOpen,
 }: {
   formAction: (data: FormData) => Promise<{ success: boolean; error: boolean }>;
-  table: "teacher" | "student" | "itemType" | "lostItem";
+  table: "teacher" | "student" | "itemType" | "lostItem" | "user";
   id: number | string | undefined;
   setOpen: (state: boolean) => void;
 }) => {
@@ -27,7 +27,7 @@ const Form = ({
     const result = await formAction(formData);
 
     if (result.success) {
-      toast(`${table} has been deleted!`);
+      toast.success(`${table} has been deleted!`);
       setOpen(false);
       router.refresh();
     } else {

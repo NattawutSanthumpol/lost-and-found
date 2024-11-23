@@ -6,7 +6,8 @@ export type FormContainerProps = {
     | "teacher"
     | "student"
     | "itemType"
-    | "lostItem";
+    | "lostItem"
+    | "user";
   id?: number;
 };
 

@@ -7,6 +7,8 @@ import {
   LostItemSchema,
   StudentSchema,
   TeacherSchema,
+  UpdateUserSchema,
+  UserSchema,
 } from "./formValidationSchemas";
 
 import { mkdir, unlink, writeFile } from "fs/promises";
@@ -14,12 +16,11 @@ import { promises as fs } from "fs";
 import { ItemType, LostItem, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { error } from "console";
-import { verifyPassword } from "./helper";
+import { saltAndHashPassword, verifyPassword } from "./helper";
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "../auth";
 import prisma from "./prisma";
 // import { prisma } from "@/lib/prisma";
-
 
 // type CurrentState = { success: boolean; error: boolean };
 
@@ -28,7 +29,7 @@ export const createTeacher = async (data: TeacherSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "images/other/noAvatar.png";
+      data.img = "/images/other/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -281,7 +282,7 @@ export const createStudent = async (data: StudentSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "images/other/noAvatar.png";
+      data.img = "/images/other/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -531,7 +532,7 @@ export const deleteStudent = async (data: FormData) => {
 ////////////////////////////////////////////////////// End Student //////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////// Item Type //////////////////////////////////////////////////////
-export const createItemType = async (data: ItemType) => {
+export const createItemType = async (data: ItemTypeSchema) => {
   try {
     // Insert to db
     await prisma.itemType.create({
@@ -629,7 +630,7 @@ export const createLostItem = async (data: LostItemSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "images/other/noAvatar.png";
+      data.img = "/images/other/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -849,33 +850,33 @@ export const logIn = async (formData: FormData) => {
     redirectTo: "/", // /admin/dashboard
   };
 
-  // Get User
-  const existingUser = await prisma.user.findUnique({
-    where: { username: rawLogIn.username as string },
-  });
-
-  // console.log("existingUser => ", existingUser);
-
-  // Check User
-  if (existingUser === null) {
-    return { error: "Invalid username or password" };
-  }
-
-  // Check Password
-  if (!verifyPassword(rawLogIn.password, existingUser.password)) {
-    return { error: "Invalid username or password" };
-  }
-  // console.log("Check Password Pass");
-
   try {
+    // Get User
+    const existingUser = await prisma.user.findUnique({
+      where: { username: rawLogIn.username as string },
+    });
+
+    // console.log("existingUser => ", existingUser);
+
+    // Check User
+    if (existingUser === null) {
+      return { error: "Invalid username or password" };
+    }
+
+    // Check Password
+    if (!verifyPassword(rawLogIn.password, existingUser.password)) {
+      return { error: "Invalid username or password" };
+    }
+    // console.log("Check Password Pass");
+
     const loginResult = await signIn("credentials", {
       redirect: false,
       username: rawLogIn.username,
       password: rawLogIn.password,
     });
     console.log("loginResult => ", loginResult);
-    if(!loginResult){
-      return {error: "Invalid username or password"}
+    if (!loginResult) {
+      return { error: "Invalid username or password" };
     }
   } catch (err: any) {
     if (error instanceof AuthError) {
@@ -885,15 +886,387 @@ export const logIn = async (formData: FormData) => {
         default:
           return { error: `${error.type}` };
       }
+    } else {
+      return { error: `${err}` };
+      // throw {error: `${err}`}
     }
-    
-    throw error;
   }
-  revalidatePath("/");
+  // revalidatePath("/");
 };
 
 export const logOut = async () => {
   await signOut({ redirectTo: "/login" });
   // revalidatePath("/login");
+};
+
+export const createUser = async (data: UserSchema) => {
+  try {
+    //Image
+    if (!data.img) {
+      data.img = "/images/other/noAvatar.png";
+    } else {
+      // Convert the file data to a Buffer
+      const base64Data = data.img.split(",")[1];
+
+      const buffer = Buffer.from(base64Data, "base64");
+      // Replace spaces in the file name with underscores
+      const timestamp = Date.now();
+
+      // Check the file type from the base64 header
+      const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+      const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+      const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
+      const filePath = `/uploads/user/${filename}`;
+
+      // Ensure the uploads directory exists
+      const uploadDir = path.join(process.cwd(), "public/uploads/user");
+      await mkdir(uploadDir, { recursive: true });
+
+      // Write the file to the specified directory (public/uploads) with the modified filename
+      await writeFile(path.join(uploadDir, filename), buffer);
+
+      data.img = filePath;
+    }
+
+    // Insert to db
+    await prisma.user.create({
+      data: {
+        username: data.username,
+        password: saltAndHashPassword(data.password),
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || null,
+        phone: data.phone || null,
+        img: data.img || null,
+        sex: data.sex,
+        role: data.role,
+      },
+    });
+
+    return { success: true, error: false };
+  } catch (err: unknown) {
+    // ตรวจจับข้อผิดพลาดจาก Prisma
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      // ตรวจสอบว่า err.meta และ err.meta.target มีค่า
+      if (err.meta && Array.isArray(err.meta.target)) {
+        // เมื่อรู้ว่า err.meta.target เป็น array, เราสามารถเข้าถึงได้
+        if (err.meta.target.includes("email")) {
+          return {
+            success: false,
+            error: true,
+            message: "Email is already taken!",
+          };
+        } else if (err.meta.target.includes("phone")) {
+          return {
+            success: false,
+            error: true,
+            message: "Phone number is already taken!",
+          };
+        }
+      }
+    }
+
+    console.log("Unexpected error:", err);
+    return {
+      success: false,
+      error: true,
+      message: `Failed to create user. Error: ${err}`,
+    };
+  }
+};
+
+export const getUserById = async (id: number) => {
+  if (!id) {
+    return null;
+  }
+  try {
+    const result = await prisma.user.findUnique({ where: { id: id } });
+
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+};
+
+export const updateUser = async (data: UserSchema, id: number) => {
+  if (!id) {
+    return { success: false, error: true };
+  }
+
+  try {
+    //Image
+    let imagePath = data.img;
+    const imgInData = await prisma.user.findUnique({ where: { id } });
+
+    // Check Image in Folder
+    if (data.img === imgInData?.img && data.img) {
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "user",
+        path.basename(data.img)
+      );
+
+      try {
+        await fs.access(filePath);
+      } catch (err: unknown) {
+        // use default image
+        imagePath = "/images/other/noAvatar.png";
+      }
+    } else if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image
+      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+        const filePath = path.join(process.cwd(), "public", imgInData?.img);
+
+        try {
+          await fs.access(filePath);
+          await unlink(filePath);
+        } catch (err) {
+          console.error("Error : ", err);
+        }
+      }
+
+      // New Upload Image
+      // Convert the file data to a Buffer
+      const base64Data = data.img.split(",")[1];
+
+      const buffer = Buffer.from(base64Data, "base64");
+      // Replace spaces in the file name with underscores
+      const timestamp = Date.now();
+
+      // Check the file type from the base64 header
+      const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+      const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+      const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
+      const newFilePath = `/uploads/user/${filename}`;
+      console.log("newFilePath => ", newFilePath);
+
+      // Ensure the uploads directory exists
+      const uploadDir = path.join(process.cwd(), "public/uploads/user");
+      await mkdir(uploadDir, { recursive: true });
+
+      // Write the file to the specified directory (public/uploads) with the modified filename
+      await writeFile(path.join(uploadDir, filename), buffer);
+
+      imagePath = newFilePath;
+    } else {
+      // use default image
+      imagePath = "/images/other/noAvatar.png";
+    }
+
+    // Update Data
+    await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        username: data.username,
+        password: saltAndHashPassword(data.password),
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || null,
+        phone: data.phone || null,
+        img: data.img || null,
+        sex: data.sex,
+        role: data.role,
+      },
+    });
+    return { success: true, error: false };
+  } catch (err: unknown) {
+    // ตรวจจับข้อผิดพลาดจาก Prisma
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      // ตรวจสอบว่า err.meta และ err.meta.target มีค่า
+      if (err.meta && Array.isArray(err.meta.target)) {
+        // เมื่อรู้ว่า err.meta.target เป็น array, เราสามารถเข้าถึงได้
+        if (err.meta.target.includes("email")) {
+          return {
+            success: false,
+            error: true,
+            message: "Email is already taken!",
+          };
+        } else if (err.meta.target.includes("phone")) {
+          return {
+            success: false,
+            error: true,
+            message: "Phone number is already taken!",
+          };
+        }
+      }
+    }
+
+    // หากไม่พบข้อผิดพลาดจาก Prisma หรือไม่สามารถจับข้อผิดพลาดได้
+    console.log("Unexpected error:", err);
+    return {
+      success: false,
+      error: true,
+      message: `Failed to update user. Error: ${err}`,
+    };
+  }
+};
+
+export const updateUserNonPassword = async (data: UpdateUserSchema, id: number) => {
+  if (!id) {
+    return { success: false, error: true };
+  }
+
+  try {
+    //Image
+    let imagePath = data.img;
+    const imgInData = await prisma.user.findUnique({ where: { id } });
+
+    // Check Image in Folder
+    if (data.img === imgInData?.img && data.img) {
+      const filePath = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "user",
+        path.basename(data.img)
+      );
+
+      try {
+        await fs.access(filePath);
+      } catch (err: unknown) {
+        // use default image
+        imagePath = "/images/other/noAvatar.png";
+      }
+    } else if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image
+      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+        const filePath = path.join(process.cwd(), "public", imgInData?.img);
+
+        try {
+          await fs.access(filePath);
+          await unlink(filePath);
+        } catch (err) {
+          console.error("Error : ", err);
+        }
+      }
+
+      // New Upload Image
+      // Convert the file data to a Buffer
+      const base64Data = data.img.split(",")[1];
+
+      const buffer = Buffer.from(base64Data, "base64");
+      // Replace spaces in the file name with underscores
+      const timestamp = Date.now();
+
+      // Check the file type from the base64 header
+      const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+      const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+      const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
+      const newFilePath = `/uploads/user/${filename}`;
+      console.log("newFilePath => ", newFilePath);
+
+      // Ensure the uploads directory exists
+      const uploadDir = path.join(process.cwd(), "public/uploads/user");
+      await mkdir(uploadDir, { recursive: true });
+
+      // Write the file to the specified directory (public/uploads) with the modified filename
+      await writeFile(path.join(uploadDir, filename), buffer);
+
+      imagePath = newFilePath;
+    } else {
+      // use default image
+      imagePath = "/images/other/noAvatar.png";
+    }
+
+    // Update Data
+    await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        username: data.username,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || null,
+        phone: data.phone || null,
+        img: data.img || null,
+        sex: data.sex,
+        role: data.role,
+      },
+    });
+    return { success: true, error: false };
+  } catch (err: unknown) {
+    // ตรวจจับข้อผิดพลาดจาก Prisma
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      // ตรวจสอบว่า err.meta และ err.meta.target มีค่า
+      if (err.meta && Array.isArray(err.meta.target)) {
+        // เมื่อรู้ว่า err.meta.target เป็น array, เราสามารถเข้าถึงได้
+        if (err.meta.target.includes("email")) {
+          return {
+            success: false,
+            error: true,
+            message: "Email is already taken!",
+          };
+        } else if (err.meta.target.includes("phone")) {
+          return {
+            success: false,
+            error: true,
+            message: "Phone number is already taken!",
+          };
+        }
+      }
+    }
+
+    // หากไม่พบข้อผิดพลาดจาก Prisma หรือไม่สามารถจับข้อผิดพลาดได้
+    console.log("Unexpected error:", err);
+    return {
+      success: false,
+      error: true,
+      message: `Failed to update user non password. Error: ${err}`,
+    };
+  }
+};
+
+export const deleteUser = async (data: FormData) => {
+  const id = data.get("id");
+
+  // ตรวจสอบว่าค่า id เป็น null หรือไม่
+  if (!id || isNaN(Number(id))) {
+    return { success: false, error: true };
+  }
+
+  try {
+    const imgFile = await prisma.user.findUnique({
+      where: { id: Number(id) },
+      select: { img: true },
+    });
+
+    if (imgFile) {
+      // ถ้ามีรูปภาพในฟิลด์ img
+      const imagePath = imgFile.img;
+
+      if (imagePath && imagePath !== "/images/other/noAvatar.png") {
+        // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
+        const filePath = path.join(process.cwd(), "public", imagePath);
+
+        // ลบไฟล์รูปภาพ
+        await unlink(filePath);
+        console.log(`File deleted: ${filePath}`);
+      }
+    }
+
+    await prisma.user.delete({
+      where: {
+        id: Number(id),
+      },
+    });
+
+    return { success: true, error: false };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      error: true,
+      message: `Failed to delete user. Error: ${err}`,
+    };
+  }
 };
 ////////////////////////////////////////////////////// End Users //////////////////////////////////////////////////////

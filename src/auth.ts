@@ -72,6 +72,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             email: currentUser.email,
             role: currentUser.role,
             userName: currentUser.username,
+            image: currentUser.img,
           };
         } else {
           throw new Error("Invalid email or password");
@@ -82,8 +83,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     jwt: async ({ token, user }) => {
       if (user) {
+        token.id = user.id;
         token.role = user.role;
         token.userName = user.userName;
+        token.image = user.image;
       }
 
       return token;
@@ -93,6 +96,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.userName = token.userName as string;
+        session.user.image = token.image as string;
       }
       return session;
     },

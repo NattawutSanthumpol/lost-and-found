@@ -5,6 +5,7 @@ import {
   deleteLostItem,
   deleteStudent,
   deleteTeacher,
+  deleteUser,
 } from "@/lib/actions";
 import Image from "next/image";
 import { useState } from "react";
@@ -16,18 +17,19 @@ const deleteActionMap = {
   student: deleteStudent,
   itemType: deleteItemType,
   lostItem: deleteLostItem,
+  user: deleteUser,
 };
 
 const FormModal = ({
   table,
   id,
-}: FormContainerProps ) => {
+}: FormContainerProps) => {
   const size = "w-7 h-7";
   const bgColor = "bg-lamaPurple";
 
   const [open, setOpen] = useState(false);
   const formAction = deleteActionMap[table];
- 
+
   return (
     <>
       <button

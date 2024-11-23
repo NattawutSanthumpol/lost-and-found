@@ -34,11 +34,6 @@ export const studentSchema = z.object({
     .regex(/^\d*$/, { message: "Phone number must contain only numbers!" })
     .optional(),
   img: z.string().optional(),
-  // img: z
-  //   .optional(z.instanceof(File)) // img เป็น File หรือ undefined
-  //   .refine((file) => !file || file.size <= 15 * 1024 * 1024, {
-  //     message: "Image size should not exceed 15MB",
-  //   }),
   sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
 });
 
@@ -63,7 +58,63 @@ export const lostItemSchema = z.object({
   userId: z.number().min(1, { message: "User ID is required!" }),
 });
 
+export const userSchema = z
+  .object({
+    username: z.string().min(1, { message: "User Name is required!" }),
+    password: z.string().min(4, { message: "Password must be at least 4 characters!" }),
+    confirmPassword: z
+      .string()
+      .min(4, { message: "Confirm Password must be at least 4 characters" }),
+    firstName: z.string().min(1, { message: "First name is required!" }),
+    lastName: z.string().min(1, { message: "Last name is required!" }),
+    email: z
+      .string()
+      .email({ message: "Invalid email address!" })
+      .optional()
+      .or(z.literal("")),
+    phone: z
+      .string()
+      .regex(/^\d*$/, { message: "Phone number must contain only numbers!" })
+      .optional(),
+    img: z.string().optional(),
+    sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
+    role: z.enum(["ADMIN", "TEACHER"], { message: "Role is required!" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match!",
+    path: ["confirmPassword"],
+  });
+
+export const updateUserSchema = z
+  .object({
+    username: z.string().min(1, { message: "User Name is required!" }),
+    password: z.string().min(4, { message: "Password must be at least 4 characters!" }).optional(),
+    confirmPassword: z
+      .string()
+      .min(4, { message: "Confirm Password must be at least 4 characters" }).optional(),
+    firstName: z.string().min(1, { message: "First name is required!" }),
+    lastName: z.string().min(1, { message: "Last name is required!" }),
+    email: z
+      .string()
+      .email({ message: "Invalid email address!" })
+      .optional()
+      .or(z.literal("")),
+    phone: z
+      .string()
+      .regex(/^\d*$/, { message: "Phone number must contain only numbers!" })
+      .optional(),
+    img: z.string().optional(),
+    sex: z.enum(["MALE", "FEMALE"], { message: "Sex is required!" }),
+    role: z.enum(["ADMIN", "TEACHER"], { message: "Role is required!" }),
+  })
+  .refine((data) => data.password || data.password === data.confirmPassword, {
+    message: "Passwords must match!",
+    path: ["confirmPassword"],
+  });
+
 export type TeacherSchema = z.infer<typeof teacherSchema>;
 export type StudentSchema = z.infer<typeof studentSchema>;
 export type ItemTypeSchema = z.infer<typeof itemTypeSchema>;
 export type LostItemSchema = z.infer<typeof lostItemSchema>;
+export type UserSchema = z.infer<typeof userSchema>;
+export type UpdateUserSchema = z.infer<typeof updateUserSchema>;

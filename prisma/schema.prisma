@@ -89,8 +89,8 @@ enum LostStatus {
 }
 
 enum UserRole {
-  ADMIN
   TEACHER
+  ADMIN
 }
 
 enum UserSex {

@@ -61,10 +61,10 @@ const EditStudentPage = () => {
       setIsSubmitting(false);
   
       if (result.success) {
-        toast("student updated successfully!");
+        toast.success("student updated successfully!");
         router.push("/admin/students");
       } else {
-        alert("Failed to update student. Please try again.");
+        toast.error("Failed to update student. Please try again.");
       }
     };
   

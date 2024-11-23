@@ -1,11 +1,13 @@
 "use client";
 
 import { logIn } from "@/lib/actions";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
 const LoginForm = () => {
     const router = useRouter()
+    const { data: session, update } = useSession();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -15,13 +17,13 @@ const LoginForm = () => {
         try {
             const result = await logIn(formData);
             if (result?.error) {
-                console.log("result Login => ",result);
                 toast.error(result?.error)
-            }else{
+            } else {
+                await update();
+                toast.success("Login Success.")
                 router.push('/admin/dashboard')
             }
 
-            toast.success("Login Success.")
         } catch (error: unknown) {
             toast.error(error as string)
         }
@@ -30,13 +32,13 @@ const LoginForm = () => {
     return (
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <img
+                {/* <img
                     alt="Your Company"
                     src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
                     className="mx-auto h-10 w-auto"
-                />
+                /> */}
                 <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-                    Sign in to your account
+                    Sign in
                 </h2>
             </div>
 

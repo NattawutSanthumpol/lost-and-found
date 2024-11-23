@@ -48,7 +48,7 @@ const EditTeacherPage = () => {
           }
           console.log(data);
         } catch (error) {
-          toast(`Failed to fetch teacher data: ${error}`);
+          toast.error(`Failed to fetch teacher data: ${error}`);
         }
       };
       fetchTeacher();
@@ -61,10 +61,11 @@ const EditTeacherPage = () => {
     setIsSubmitting(false);
 
     if (result.success) {
-      toast("Teacher updated successfully!");
+      toast.success("Teacher updated successfully!");
       router.push("/admin/teachers");
+      router.refresh();
     } else {
-      alert("Failed to update teacher. Please try again.");
+      toast.error("Failed to update teacher. Please try again.");
     }
   };
 
@@ -196,7 +197,7 @@ const EditTeacherPage = () => {
               >
                 {isSubmitting ? "Saving..." : "Update"}
               </button>
-              <Link href={`/teachers`}>
+              <Link href={`/admin/teachers`}>
                 <button
                   type="button"
                   className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-5 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
