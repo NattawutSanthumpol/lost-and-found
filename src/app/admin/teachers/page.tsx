@@ -4,7 +4,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { SUPABASE_IMAGE_URL, ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma, Teacher, UserRole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,7 +46,7 @@ const TeacherListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">
         <Image
-          src={item.img || "/images/other/noAvatar.png"}
+          src={ SUPABASE_IMAGE_URL+item.img || "/noAvatar.png"}
           alt=""
           width={40}
           height={40}

@@ -86,7 +86,7 @@ const LostItemListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">
         <Image
-          src={item.img || "/images/other/noAvatar.png"}
+          src={item.img || "/noAvatar.png"}
           alt=""
           width={40}
           height={40}

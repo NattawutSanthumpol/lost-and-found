@@ -21,3 +21,6 @@ export const PROTECTED_SUB_ROUTES = [
 export const PROTECTED_ADMIN_ROUTES = [
   "/admin/users(.*)",
 ]
+
+export const SUPABASE_IMAGE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/"
+export const BUCKET_NAME = "lostFound"

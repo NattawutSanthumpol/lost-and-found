@@ -20,6 +20,8 @@ import { saltAndHashPassword, verifyPassword } from "./helper";
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "../auth";
 import prisma from "./prisma";
+import { supabase } from "./supabaseClient";
+import { BUCKET_NAME } from "./settings";
 // import { prisma } from "@/lib/prisma";
 
 // type CurrentState = { success: boolean; error: boolean };
@@ -29,29 +31,43 @@ export const createTeacher = async (data: TeacherSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/images/other/noAvatar.png";
+      data.img = "/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
-      const timestamp = Date.now();
 
       // Check the file type from the base64 header
+      const timestamp = Date.now();
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `teacher_${timestamp}.${fileExtension}`; // Construct new filename
       const filePath = `/uploads/teacher/${filename}`;
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/teacher");
-      await mkdir(uploadDir, { recursive: true });
+      // // Ensure the uploads directory exists  (Upload in Local)
+      // const uploadDir = path.join(process.cwd(), "public/uploads/teacher");
+      // await mkdir(uploadDir, { recursive: true });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      // // Write the file to the specified directory (public/uploads) with the modified filename
+      // await writeFile(path.join(uploadDir, filename), buffer);
 
-      data.img = filePath;
+      // Upload file to Supabase Storage
+      const { data: uploadedFile, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`teacher/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+        if (error) {
+          return {
+            success: false,
+            error: true,
+            message: `Update Image Error : ${error}`,
+          };
+        }
+
+      data.img = uploadedFile?.fullPath;
     }
 
     // Insert to db
@@ -140,66 +156,112 @@ export const updateTeacher = async (data: TeacherSchema, id: number) => {
     let imagePath = data.img;
     const imgInData = await prisma.teacher.findUnique({ where: { id } });
 
-    // Check Image in Folder
-    if (data.img === imgInData?.img && data.img) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "teacher",
-        path.basename(data.img)
-      );
+    // // Check Image in Folder (Upload in Local)
+    // if (data.img === imgInData?.img && data.img) {
+    //   const filePath = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "teacher",
+    //     path.basename(data.img)
+    //   );
 
-      try {
-        await fs.access(filePath);
-      } catch (err: unknown) {
-        // use default image
-        imagePath = "/images/other/noAvatar.png";
-      }
-    } else if (data.img !== imgInData?.img && data.img) {
-      // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
-        const filePath = path.join(process.cwd(), "public", imgInData?.img);
-        console.log("imgInData => ", imgInData?.img);
+    //   try {
+    //     await fs.access(filePath);
+    //   } catch (err: unknown) {
+    //     // use default image
+    //     imagePath = "/noAvatar.png";
+    //   }
+    // } else if (data.img !== imgInData?.img && data.img) {
+    //   // Delete Old Image
+    //   if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+    //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
+    //     console.log("imgInData => ", imgInData?.img);
 
-        try {
-          console.log("New Upload =>", filePath);
-          await fs.access(filePath);
-          await unlink(filePath);
-        } catch (err) {
-          console.error("Error : ", err);
+    //     try {
+    //       console.log("New Upload =>", filePath);
+    //       await fs.access(filePath);
+    //       await unlink(filePath);
+    //     } catch (err) {
+    //       console.error("Error : ", err);
+    //     }
+    //   }
+
+    //   // New Upload Image
+    //   // Convert the file data to a Buffer
+    //   const base64Data = data.img.split(",")[1];
+
+    //   const buffer = Buffer.from(base64Data, "base64");
+    //   // Replace spaces in the file name with underscores
+    //   const timestamp = Date.now();
+
+    //   // Check the file type from the base64 header
+    //   const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+    //   const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+    //   const filename = `teacher_${timestamp}.${fileExtension}`; // Construct new filename
+    //   const newFilePath = `/uploads/teacher/${filename}`;
+    //   console.log("newFilePath => ", newFilePath);
+
+    //   // Ensure the uploads directory exists
+    //   const uploadDir = path.join(process.cwd(), "public/uploads/teacher");
+    //   await mkdir(uploadDir, { recursive: true });
+
+    //   // Write the file to the specified directory (public/uploads) with the modified filename
+    //   await writeFile(path.join(uploadDir, filename), buffer);
+
+    //   imagePath = newFilePath;
+    // } else {
+    //   // use default image
+    //   imagePath = "/noAvatar.png";
+    // }
+
+    // use Supabase
+    // Check Image Change
+    if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image from Supabase if necessary
+      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+        const oldFilePath = imgInData.img.split('/').pop();
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME)  // Ensure you are using the correct Supabase bucket
+          .remove([`teacher/${oldFilePath}`]);
+
+        if (deleteError) {
+          console.error("Error deleting old image:", deleteError.message);
         }
       }
 
-      // New Upload Image
-      // Convert the file data to a Buffer
+      // Upload New Image to Supabase
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
       const timestamp = Date.now();
-
-      // Check the file type from the base64 header
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `teacher_${timestamp}.${fileExtension}`; // Construct new filename
-      const newFilePath = `/uploads/teacher/${filename}`;
-      console.log("newFilePath => ", newFilePath);
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/teacher");
-      await mkdir(uploadDir, { recursive: true });
+      // Upload to Supabase Storage
+      const { data: uploadedFile, error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`teacher/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      if (uploadError) {
+        return {
+          success: false,
+          error: true,
+          message: `Image upload error: ${uploadError.message}`,
+        };
+      }
 
-      imagePath = newFilePath;
+      // Set the path to the new image
+      imagePath = uploadedFile?.fullPath || "/noAvatar.png";
     } else {
-      // use default image
-      imagePath = "/images/other/noAvatar.png";
+      // No image change, keep existing image or use default image
+      imagePath = imgInData?.img || "/noAvatar.png";
     }
 
-    // Update Data
+    // Update Data in Database
     await prisma.teacher.update({
       where: {
         id: id,
@@ -264,12 +326,24 @@ export const deleteTeacher = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/images/other/noAvatar.png") {
-        const filePath = path.join(process.cwd(), "public", imagePath);
+      if (imagePath && imagePath !== "/noAvatar.png") {
+        // const filePath = path.join(process.cwd(), "public", imagePath);
 
-        // ลบไฟล์รูปภาพ
-        await unlink(filePath);
-        console.log(`File deleted: ${filePath}`);
+        // // ลบไฟล์รูปภาพ
+        // await unlink(filePath);
+        // console.log(`File deleted: ${filePath}`);
+
+        const filePath = imagePath.split('/').pop(); // Get file name from path
+        // ลบไฟล์ภาพจาก Supabase Storage
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME)  // Ensure you are using the correct Supabase bucket
+          .remove([`teacher/${filePath}`]);
+
+        if (deleteError) {
+          console.error("Error deleting image from Supabase:", deleteError.message);
+        } else {
+          console.log(`Image deleted: ${filePath}`);
+        }
       }
     }
 
@@ -296,7 +370,7 @@ export const createStudent = async (data: StudentSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/images/other/noAvatar.png";
+      data.img = "/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -421,11 +495,11 @@ export const updateStudent = async (data: StudentSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/images/other/noAvatar.png";
+        imagePath = "/noAvatar.png";
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
         console.log("imgInData => ", imgInData?.img);
 
@@ -463,7 +537,7 @@ export const updateStudent = async (data: StudentSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/images/other/noAvatar.png";
+      imagePath = "/noAvatar.png";
     }
 
     // Update Data
@@ -531,7 +605,7 @@ export const deleteStudent = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/images/other/noAvatar.png") {
+      if (imagePath && imagePath !== "/noAvatar.png") {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 
@@ -672,7 +746,7 @@ export const createLostItem = async (data: LostItemSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/images/imageFound.png";
+      data.img = "/imageFound.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -788,11 +862,11 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/images/imageFound.png";
+        imagePath = "/imageFound.png";
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/imageFound.png") {
+      if (imgInData?.img && imgInData?.img !== "/imageFound.png") {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
         console.log("imgInData => ", imgInData?.img);
 
@@ -830,7 +904,7 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/images/imageFound.png";
+      imagePath = "/imageFound.png";
     }
 
     // Update Data
@@ -879,7 +953,7 @@ export const deleteLostItem = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/images/imageFound.png") {
+      if (imagePath && imagePath !== "/imageFound.png") {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 
@@ -960,7 +1034,7 @@ export const logIn = async (formData: FormData) => {
 };
 
 export const logOut = async () => {
-  await signOut({redirect: false});
+  await signOut({ redirect: false });
   // await signOut({redirectTo: "/"});
   // revalidatePath("/");
 };
@@ -969,7 +1043,7 @@ export const createUser = async (data: UserSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/images/other/noAvatar.png";
+      data.img = "/noAvatar.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -1083,11 +1157,11 @@ export const updateUser = async (data: UserSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/images/other/noAvatar.png";
+        imagePath = "/noAvatar.png";
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
 
         try {
@@ -1123,7 +1197,7 @@ export const updateUser = async (data: UserSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/images/other/noAvatar.png";
+      imagePath = "/noAvatar.png";
     }
 
     // Update Data
@@ -1203,11 +1277,11 @@ export const updateUserNonPassword = async (
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/images/other/noAvatar.png";
+        imagePath = "/noAvatar.png";
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
 
         try {
@@ -1243,7 +1317,7 @@ export const updateUserNonPassword = async (
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/images/other/noAvatar.png";
+      imagePath = "/noAvatar.png";
     }
 
     // Update Data
@@ -1313,7 +1387,7 @@ export const deleteUser = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/images/other/noAvatar.png") {
+      if (imagePath && imagePath !== "/noAvatar.png") {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 

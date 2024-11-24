@@ -10,6 +10,7 @@ import { getTeacherById, updateTeacher } from "@/lib/actions";
 import { toast } from "react-toastify";
 import { Teacher } from "@prisma/client";
 import Link from "next/link";
+import { SUPABASE_IMAGE_URL } from "@/lib/settings";
 
 const EditTeacherPage = () => {
   const router = useRouter();
@@ -17,10 +18,11 @@ const EditTeacherPage = () => {
   const teacherId: number = Array.isArray(params.id)
     ? parseInt(params.id[0])
     : params.id
-      ? parseInt(params.id)
-      : 0;
+    ? parseInt(params.id)
+    : 0;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [image, setImage] = useState<string>("");
+  const [imageTemp, setImageTemp] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   const {
@@ -65,7 +67,9 @@ const EditTeacherPage = () => {
       router.push("/admin/teachers");
       router.refresh();
     } else {
-      toast.error(`Failed to update teacher. Please try again. Error: ${result.message}`);
+      toast.error(
+        `Failed to update teacher. Please try again. Error: ${result.message}`
+      );
     }
   };
 
@@ -76,10 +80,12 @@ const EditTeacherPage = () => {
       const fileType = file.type.split("/")[0];
       if (fileType === "image") {
         const reader = new FileReader();
-        reader.onload = () => setImage(reader.result as string);
+        reader.onload = () => {
+          setImage(reader.result as string);
+          setImageTemp(reader.result as string);
+        };
         reader.readAsDataURL(file);
-      }
-      else {
+      } else {
         toast.error("Please select an image file.");
       }
     }
@@ -103,7 +109,12 @@ const EditTeacherPage = () => {
             <div className="w-48 h-48 border rounded-full overflow-hidden">
               {image ? (
                 <Image
-                  src={image || "/images/other/noAvatar.png"}
+                  src={
+                    imageTemp.startsWith("data:image")
+                      ? imageTemp
+                      : SUPABASE_IMAGE_URL + image ||
+                        "/noAvatar.png"
+                  }
                   alt="Uploaded"
                   className="w-full h-full rounded-full object-cover"
                   width={500}

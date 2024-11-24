@@ -76,7 +76,7 @@ const LostItemPage = () => {
                   >
                     {/* Image */}
                     <Image
-                      src={item.img || "/images/imageFound.png"}
+                      src={item.img || "/imageFound.png"}
                       alt={item.itemName}
                       className="w-full h-50 object-cover p-6"
                       width={500}

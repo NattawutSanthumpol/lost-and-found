@@ -102,7 +102,7 @@ const EditStudentPage = () => {
               <div className="w-48 h-48 border rounded-full overflow-hidden">
                 {image ? (
                   <Image
-                    src={image || "/images/other/noAvatar.png"}
+                    src={image || "/noAvatar.png"}
                     alt="Uploaded"
                     className="w-full h-full rounded-full object-cover"
                     width={500}
