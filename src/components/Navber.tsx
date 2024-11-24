@@ -9,7 +9,6 @@ import { useEffect, useRef, useState } from "react";
 
 const Navbar = () => {
   const { data: session, status, update } = useSession();
-  // let isAuthenticated = false;
   const isAuthenticated = status === "authenticated";
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -19,16 +18,6 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
 
-  // useEffect(() => {
-  //   if (status === "authenticated") {
-  //     isAuthenticated = true;
-  //   } else if (status === "unauthenticated") {
-  //     isAuthenticated = false;
-  //   }
-  // }, [status]);
-
-  // console.log("isAuthenticated => ", isAuthenticated, status);
-
   const handleClickOutside = (event: MouseEvent) => {
     if (
       dropdownRef.current &&
@@ -37,6 +26,13 @@ const Navbar = () => {
       setIsOpen(false);
     }
   };
+
+  const handleLogout = async () => {
+    await logOut();
+    await update();
+    window.location.href = "/"
+  };
+
 
   useEffect(() => {
     document.addEventListener("click", handleClickOutside); // เพิ่ม Event Listener
@@ -116,18 +112,7 @@ const Navbar = () => {
                   <li>
                     <button
                       className="flex items-center justify-center font-bold gap-2 text-red-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight w-full"
-                      //  onClick={handleLogout}
-                      onClick={async () => {
-                        await logOut();
-                        await update();
-                        window.location.href = "/"
-                        // setTimeout(() => {
-                        //   router.push("/");
-                        //   router.refresh();
-                        // }, 1000)
-                        // router.push("/");
-                        // router.refresh();
-                      }}
+                      onClick={handleLogout}
                     >
                       Logout
                     </button>
