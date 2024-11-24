@@ -65,7 +65,7 @@ const EditTeacherPage = () => {
       router.push("/admin/teachers");
       router.refresh();
     } else {
-      toast.error("Failed to update teacher. Please try again.");
+      toast.error(`Failed to update teacher. Please try again. Error: ${result.message}`);
     }
   };
 

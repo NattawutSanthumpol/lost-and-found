@@ -37,7 +37,7 @@ const CreateTeacherPage = () => {
         } else if (result.error) {
             toast.error(result.message);
         } else {
-            toast.error("Failed to create teacher. Please try again.");
+            toast.error(`Failed to create teacher. Please try again. Error: ${result.message}`);
         }
     };
 

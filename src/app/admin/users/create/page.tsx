@@ -38,7 +38,7 @@ const CreateUserPage = () => {
         } else if (result.error) {
             toast.error(result.message);
         } else {
-            toast.error("Failed to create user. Please try again.");
+            toast.error(`Failed to create user. Please try again. Error: ${result.message}`);
         }
     };
 

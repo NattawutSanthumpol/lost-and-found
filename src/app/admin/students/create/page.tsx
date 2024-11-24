@@ -36,7 +36,7 @@ const CreateStudentPage = () => {
         } else if (result.error) {
             toast.error(result.message);
         } else {
-            toast.error("Failed to create student. Please try again.");
+            toast.error(`Failed to create student. Please try again. Error: ${result.message}`);
         }
     };
 
