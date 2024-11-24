@@ -46,7 +46,7 @@ const TeacherListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">
         <Image
-          src={ SUPABASE_IMAGE_URL+item.img || "/noAvatar.png"}
+          src={SUPABASE_IMAGE_URL + item.img || "/noAvatar.png"}
           alt=""
           width={40}
           height={40}
@@ -58,7 +58,7 @@ const TeacherListPage = async ({
         </div>
       </td>
       {/* <td className="hidden md:table-cell">{item.id}</td> */}
-      <td className="hidden md:table-cell">{item.phone}</td>
+      <td className="hidden lg:table-cell">{item.phone}</td>
       <td>
         <div className="flex items-center gap-2">
           <Link href={`/admin/teachers/${item.id}`}>
@@ -71,7 +71,7 @@ const TeacherListPage = async ({
             //   <Image src="/images/other/delete.png" alt="" width={16} height={16} />
             // </button>
             <FormContainer table="teacher" id={item.id} />
-            
+
           )}
         </div>
       </td>
@@ -110,7 +110,7 @@ const TeacherListPage = async ({
     }),
     prisma.teacher.count({ where: query })
   ])
-
+  
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
