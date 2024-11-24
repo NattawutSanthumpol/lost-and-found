@@ -72,10 +72,10 @@ const UserListPage = async ({
                     <p className="text-xs text-gray-500">{item?.email}</p>
                 </div>
             </td>
-            <td className="hidden md:table-cell">{item.username}</td>
-            <td className="hidden md:table-cell">{item.phone}</td>
-            <td className="hidden md:table-cell">{item.sex.charAt(0)+item.sex.substring(1).toLocaleLowerCase()}</td>
-            <td className="hidden md:table-cell">{item.role.charAt(0)+item.role.substring(1).toLocaleLowerCase()}</td>
+            <td className="hidden lg:table-cell">{item.username}</td>
+            <td className="hidden lg:table-cell">{item.phone}</td>
+            <td className="hidden lg:table-cell">{item.sex.charAt(0)+item.sex.substring(1).toLocaleLowerCase()}</td>
+            <td className="hidden lg:table-cell">{item.role.charAt(0)+item.role.substring(1).toLocaleLowerCase()}</td>
             <td>
                 <div className="flex items-center gap-2">
                     <Link href={`/admin/users/${item.id}`}>

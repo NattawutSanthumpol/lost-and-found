@@ -19,7 +19,7 @@ async function main() {
       username: "admin",
       password: saltAndHashPassword("admin"),
       firstName: "Admin",
-      lastName: "LastName",
+      lastName: "L",
       email: "admin@mail.com",
       phone: "0811111111",
       sex: UserSex.MALE,
@@ -34,7 +34,7 @@ async function main() {
       username: "teacher",
       password: saltAndHashPassword("teacher"),
       firstName: "Teacher",
-      lastName: "LastTeacher",
+      lastName: "L",
       email: "teacher@mail.com",
       phone: "0822222222",
       sex: UserSex.FEMALE,
@@ -45,12 +45,12 @@ async function main() {
 
   // Teachers
   for (let i = 1; i <= 10; i++) {
-    const phoneNumber = `081111111${i}`.padEnd(10, '0'); // ใช้ padEnd เพื่อให้เป็น 10 หลัก
+    const phoneNumber = `080000000${i}`.padEnd(10, '0'); // ใช้ padEnd เพื่อให้เป็น 10 หลัก
 
     await prisma.teacher.create({
       data: {
-        firstName: `TeacherFName${i}`,
-        lastName: `TeacherLName${i}`,
+        firstName: `TeacherF${i}`,
+        lastName: `TeacherL${i}`,
         email: `teacher${i}@mail.com`,
         phone: phoneNumber,
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
@@ -64,12 +64,12 @@ async function main() {
 
   // Students
   for (let i = 1; i <= 30; i++) {
-    const phoneNumber = `081111111${i}`.padEnd(10, '0'); // ใช้ padEnd เพื่อให้เป็น 10 หลัก
+    const phoneNumber = `080000000${i}`.padEnd(10, '0'); // ใช้ padEnd เพื่อให้เป็น 10 หลัก
     await prisma.student.create({
       data: {
-        firstName: `StudentFName${i}`,
-        lastName: `StudentLName${i}`,
-        email: `student${i}@mail.com`,
+        firstName: `StuFName${i}`,
+        lastName: `StuLName${i}`,
+        email: `stu${i}@mail.com`,
         phone: phoneNumber,
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
         img:
@@ -81,14 +81,14 @@ async function main() {
   }
 
   // LostItem
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 60; i++) {
     await prisma.lostItem.create({
       data: {
-        itemName: `ItemName${i}`,
-        description: `Description of ItemName${i}`,
+        itemName: `Item${i}`,
+        description: `Description of Item${i}`,
         itemTypeId: Math.floor(Math.random() * 3) + 1,
         location: `Location${i}`,
-        foundDate: new Date(),
+        foundDate: getRandomDate(new Date("2024-11-01"), new Date("2024-12-31")),
         status: LostStatus.FOUND,
         img: "/images/imageFound.png",
         studentId: Math.floor(Math.random() * 30) + 1,
@@ -107,6 +107,13 @@ function saltAndHashPassword(password: any) {
   const hash = bcrypt.hashSync(password, salt); // Synchronously hash the password
   return hash; // Return the hash directly as a string
 }
+
+// ฟังก์ชันสร้างวันที่สุ่ม
+const getRandomDate = (start: Date, end: Date): Date => {
+  return new Date(
+    start.getTime() + Math.random() * (end.getTime() - start.getTime())
+  );
+};
 
 main()
   .then(async () => {

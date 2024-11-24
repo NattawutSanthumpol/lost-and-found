@@ -67,8 +67,8 @@ model LostItem {
   img         String?
   studentId   Int
   student     Student    @relation(fields: [studentId], references: [id])
-  teacherId   Int?
-  teacher     Teacher?   @relation(fields: [teacherId], references: [id])
+  teacherId   Int
+  teacher     Teacher   @relation(fields: [teacherId], references: [id])
   userId      Int
   user        User       @relation(fields: [userId], references: [id])
   createdAt   DateTime   @default(now())

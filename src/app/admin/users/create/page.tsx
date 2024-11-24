@@ -9,8 +9,9 @@ import { createUser } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import { UserRole, UserSex } from "@prisma/client";
 
-const CreateuserPage = () => {
+const CreateUserPage = () => {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [image, setImage] = useState<string>("");
@@ -92,6 +93,11 @@ const CreateuserPage = () => {
                             className="mt-4"
                             onChange={handleImageUpload}
                         />
+                        {errors.img && (
+                                <span className="text-red-500 text-sm">
+                                    {errors.img.message}
+                                </span>
+                            )}
                     </div>
 
                     {/* Column 2: Form Fields */}
@@ -197,8 +203,13 @@ const CreateuserPage = () => {
                                 {...register("sex")}
                                 className="w-full p-2 border rounded"
                             >
-                                <option value="MALE">Male</option>
-                                <option value="FEMALE">Female</option>
+                                {/* <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option> */}
+                                {Object.values(UserSex).map((sex) => (
+                                    <option key={sex} value={sex}>
+                                        {sex.charAt(0) + sex.substring(1).toLocaleLowerCase()}
+                                    </option>
+                                ))}
                             </select>
                             {errors.sex && (
                                 <span className="text-red-500 text-sm">
@@ -213,8 +224,13 @@ const CreateuserPage = () => {
                                 {...register("role")}
                                 className="w-full p-2 border rounded"
                             >
-                                <option value="ADMIN">Admin</option>
-                                <option value="TEACHER">Teacher</option>
+                                {/* <option value="ADMIN">Admin</option>
+                                <option value="TEACHER">Teacher</option> */}
+                                {Object.values(UserRole).map((role) => (
+                                    <option key={role} value={role}>
+                                        {role.charAt(0) + role.substring(1).toLocaleLowerCase()}
+                                    </option>
+                                ))}
                             </select>
                             {errors.role && (
                                 <span className="text-red-500 text-sm">
@@ -247,4 +263,4 @@ const CreateuserPage = () => {
     );
 };
 
-export default CreateuserPage;
+export default CreateUserPage;

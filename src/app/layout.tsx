@@ -22,9 +22,9 @@ export default async function RootLayout({
   return (
     <SessionProvider session={session}>
       <html lang="en">
-      <body className={inter.className}>{children} <ToastContainer position="bottom-right"/></body>
-    </html>
+        <body className={inter.className}>{children} <ToastContainer position="bottom-right" /></body>
+      </html>
     </SessionProvider>
-    
+
   );
 }

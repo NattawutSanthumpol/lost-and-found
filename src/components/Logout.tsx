@@ -1,11 +1,8 @@
-"use client";
-
 import { logOut } from "@/lib/actions";
-
 
 const Logout = () => {
   return (
-    <div onClick={() => logOut()}>
+    <div onClick={() => {logOut()}}>
       <div className="bg-gray-600 text-white text-sm px-4 py-2 rounded-md cursor-pointer">
         logout
       </div>

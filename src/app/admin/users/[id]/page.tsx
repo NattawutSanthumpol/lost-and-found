@@ -85,7 +85,7 @@ const EditUserPage = () => {
             router.refresh();
         } else {
             // toast.error(`Failed to update user. Please try again. ${result.message}`);
-            toast.error(`${result.message}`);
+            toast.error(`Failed to update user. Please try again. Error: ${result.message}`);
         }
     };
 

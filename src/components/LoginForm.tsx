@@ -2,12 +2,13 @@
 
 import { logIn } from "@/lib/actions";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
 const LoginForm = () => {
     const router = useRouter()
-    const { data: session, update } = useSession();
+    const { data: session, update, status } = useSession();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -96,15 +97,15 @@ const LoginForm = () => {
 
                 {/* <div className="text-xl text-red-500 pt-3 text-center">{error}</div> */}
 
-                {/* <p className="mt-5 text-center text-sm/6 text-gray-500">
-              Not a member?{" "}
-              <Link
-                href="/register"
-                className="font-semibold text-indigo-600 hover:text-indigo-500"
-              >
-                Register
-              </Link>
-            </p> */}
+                <p className="mt-5 text-center text-sm/6 text-gray-500">
+                    Go to {" "}
+                    <Link
+                        href="/"
+                        className="font-semibold text-indigo-600 hover:text-indigo-500"
+                    >
+                        Home
+                    </Link>
+                </p>
             </div>
         </div>
     );

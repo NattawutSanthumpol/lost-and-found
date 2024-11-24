@@ -116,6 +116,20 @@ export const getTeacherById = async (id: number) => {
   }
 };
 
+export const getAllTeacher = async () => {
+  try {
+    const result = await prisma.teacher.findMany();
+
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  } catch (err) {
+    return null;
+  }
+};
+
 export const updateTeacher = async (data: TeacherSchema, id: number) => {
   if (!id) {
     return { success: false, error: true };
@@ -369,6 +383,20 @@ export const getStudentById = async (id: number) => {
   }
 };
 
+export const getAllStudent = async () => {
+  try {
+    const result = await prisma.student.findMany();
+
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  } catch (err) {
+    return null;
+  }
+};
+
 export const updateStudent = async (data: StudentSchema, id: number) => {
   if (!id) {
     return { success: false, error: true };
@@ -569,6 +597,20 @@ export const getItemTypeById = async (id: number) => {
   }
 };
 
+export const getAllItemType = async () => {
+  try {
+    const result = await prisma.itemType.findMany();
+
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  } catch (err) {
+    return null;
+  }
+};
+
 export const updateItemType = async (data: ItemTypeSchema, id: number) => {
   if (!id) {
     return { success: false, error: true };
@@ -630,7 +672,7 @@ export const createLostItem = async (data: LostItemSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/images/other/noAvatar.png";
+      data.img = "/images/imageFound.png";
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -655,6 +697,7 @@ export const createLostItem = async (data: LostItemSchema) => {
       data.img = filePath;
     }
 
+    console.log(data.foundDate);
     // Insert to db
     await prisma.lostItem.create({
       data: {
@@ -699,6 +742,28 @@ export const getLostItemById = async (id: number) => {
   }
 };
 
+export const getAllLostItems = async () => {
+  try {
+    const result = await prisma.lostItem.findMany({
+      include: {
+        itemType: true,
+        student: true,
+        teacher: true,
+        user: true,
+      },
+    });
+
+    if (!result) {
+      return [];
+    }
+
+    return result;
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+};
+
 export const updateLostItem = async (data: LostItemSchema, id: number) => {
   if (!id) {
     return { success: false, error: true };
@@ -723,11 +788,11 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/images/other/noAvatar.png";
+        imagePath = "/images/imageFound.png";
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/images/other/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== "/images/imageFound.png") {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
         console.log("imgInData => ", imgInData?.img);
 
@@ -765,7 +830,7 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/images/other/noAvatar.png";
+      imagePath = "/images/imageFound.png";
     }
 
     // Update Data
@@ -814,7 +879,7 @@ export const deleteLostItem = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/images/other/noAvatar.png") {
+      if (imagePath && imagePath !== "/images/imageFound.png") {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 
@@ -895,8 +960,9 @@ export const logIn = async (formData: FormData) => {
 };
 
 export const logOut = async () => {
-  await signOut({ redirectTo: "/login" });
-  // revalidatePath("/login");
+  await signOut({redirect: false});
+  // await signOut({redirectTo: "/"});
+  // revalidatePath("/");
 };
 
 export const createUser = async (data: UserSchema) => {
@@ -1110,7 +1176,10 @@ export const updateUser = async (data: UserSchema, id: number) => {
   }
 };
 
-export const updateUserNonPassword = async (data: UpdateUserSchema, id: number) => {
+export const updateUserNonPassword = async (
+  data: UpdateUserSchema,
+  id: number
+) => {
   if (!id) {
     return { success: false, error: true };
   }

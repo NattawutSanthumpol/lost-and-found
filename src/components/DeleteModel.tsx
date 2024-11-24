@@ -37,7 +37,7 @@ const Form = ({
 
   return (
     <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
-      <span className="text-center font-medium">
+      <span className="text-center font-medium text-lg">
         All data will be lost. Are you sure you want to delete this {table}?
       </span>
       <button

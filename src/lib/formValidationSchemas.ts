@@ -44,24 +44,36 @@ export const itemTypeSchema = z.object({
 export const lostItemSchema = z.object({
   itemName: z.string().min(1, { message: "Item Name is required!" }),
   description: z.string().optional(),
-  itemTypeId: z.number().min(1, { message: "Item Type ID is required!" }),
+  itemTypeId: z
+    .number({ message: "Item Type ID is Number" })
+    .min(1, { message: "Item Type ID is required!" }),
   location: z.string().min(1, { message: "Location is required!" }),
-  foundDate: z.string().refine((date) => !isNaN(new Date(date).getTime()), {
-    message: "Found Date must be a valid date!",
-  }),
+  foundDate: z
+    .string() // Validate as a string first
+    .refine((val) => !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    })
+    .transform((val) => new Date(val)),
   status: z.enum(["FOUND", "RETURNED"], { message: "Status is required!" }),
-  img: z.string().min(1, { message: "Image URL is required!" }),
-  studentId: z.number().min(1, { message: "Student ID is required!" }),
+  img: z.string().optional(),
+  studentId: z
+    .number({ message: "Student ID is Number" })
+    .min(1, { message: "Student ID is required!" }),
   teacherId: z
-    .number()
+    .number({ message: "Teacher ID is Number" })
     .min(1, { message: "Teacher ID is required if applicable!" }),
-  userId: z.number().min(1, { message: "User ID is required!" }),
+  userId: z
+    .string()
+    .min(1, { message: "User ID is required!" })
+    .transform((val) => parseInt(val)),
 });
 
 export const userSchema = z
   .object({
     username: z.string().min(1, { message: "User Name is required!" }),
-    password: z.string().min(4, { message: "Password must be at least 4 characters!" }),
+    password: z
+      .string()
+      .min(4, { message: "Password must be at least 4 characters!" }),
     confirmPassword: z
       .string()
       .min(4, { message: "Confirm Password must be at least 4 characters" }),
@@ -88,10 +100,14 @@ export const userSchema = z
 export const updateUserSchema = z
   .object({
     username: z.string().min(1, { message: "User Name is required!" }),
-    password: z.string().min(4, { message: "Password must be at least 4 characters!" }).optional(),
+    password: z
+      .string()
+      .min(4, { message: "Password must be at least 4 characters!" })
+      .optional(),
     confirmPassword: z
       .string()
-      .min(4, { message: "Confirm Password must be at least 4 characters" }).optional(),
+      .min(4, { message: "Confirm Password must be at least 4 characters" })
+      .optional(),
     firstName: z.string().min(1, { message: "First name is required!" }),
     lastName: z.string().min(1, { message: "Last name is required!" }),
     email: z
