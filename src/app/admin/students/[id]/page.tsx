@@ -10,6 +10,7 @@ import { getStudentById, updateStudent } from "@/lib/actions";
 import { toast } from "react-toastify";
 import { Student } from "@prisma/client";
 import Link from "next/link";
+import { BUCKET_NAME } from "@/lib/settings";
 
 const EditStudentPage = () => {
     const router = useRouter();
@@ -102,7 +103,7 @@ const EditStudentPage = () => {
               <div className="w-48 h-48 border rounded-full overflow-hidden">
                 {image ? (
                   <Image
-                    src={image || "/noAvatar.png"}
+                    src={image || `${BUCKET_NAME}/noAvatar.png`}
                     alt="Uploaded"
                     className="w-full h-full rounded-full object-cover"
                     width={500}

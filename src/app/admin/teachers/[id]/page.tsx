@@ -10,7 +10,7 @@ import { getTeacherById, updateTeacher } from "@/lib/actions";
 import { toast } from "react-toastify";
 import { Teacher } from "@prisma/client";
 import Link from "next/link";
-import { SUPABASE_IMAGE_URL } from "@/lib/settings";
+import { BUCKET_NAME, SUPABASE_IMAGE_URL } from "@/lib/settings";
 
 const EditTeacherPage = () => {
   const router = useRouter();
@@ -113,7 +113,7 @@ const EditTeacherPage = () => {
                     imageTemp.startsWith("data:image")
                       ? imageTemp
                       : SUPABASE_IMAGE_URL + image ||
-                        "/noAvatar.png"
+                        `${BUCKET_NAME}/noAvatar.png`
                   }
                   alt="Uploaded"
                   className="w-full h-full rounded-full object-cover"

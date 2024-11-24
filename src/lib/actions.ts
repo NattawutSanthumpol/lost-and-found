@@ -31,7 +31,7 @@ export const createTeacher = async (data: TeacherSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/noAvatar.png";
+      data.img = `${BUCKET_NAME}/noAvatar.png`;
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -170,11 +170,11 @@ export const updateTeacher = async (data: TeacherSchema, id: number) => {
     //     await fs.access(filePath);
     //   } catch (err: unknown) {
     //     // use default image
-    //     imagePath = "/noAvatar.png";
+    //     imagePath = `${BUCKET_NAME}/noAvatar.png`;
     //   }
     // } else if (data.img !== imgInData?.img && data.img) {
     //   // Delete Old Image
-    //   if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+    //   if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
     //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
     //     console.log("imgInData => ", imgInData?.img);
 
@@ -212,14 +212,14 @@ export const updateTeacher = async (data: TeacherSchema, id: number) => {
     //   imagePath = newFilePath;
     // } else {
     //   // use default image
-    //   imagePath = "/noAvatar.png";
+    //   imagePath = `${BUCKET_NAME}/noAvatar.png`;
     // }
 
     // use Supabase
     // Check Image Change
     if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image from Supabase if necessary
-      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
         const oldFilePath = imgInData.img.split('/').pop();
         const { error: deleteError } = await supabase.storage
           .from(BUCKET_NAME)  // Ensure you are using the correct Supabase bucket
@@ -255,10 +255,10 @@ export const updateTeacher = async (data: TeacherSchema, id: number) => {
       }
 
       // Set the path to the new image
-      imagePath = uploadedFile?.fullPath || "/noAvatar.png";
+      imagePath = uploadedFile?.fullPath || `${BUCKET_NAME}/noAvatar.png`;
     } else {
       // No image change, keep existing image or use default image
-      imagePath = imgInData?.img || "/noAvatar.png";
+      imagePath = imgInData?.img || `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data in Database
@@ -326,7 +326,7 @@ export const deleteTeacher = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/noAvatar.png") {
+      if (imagePath && imagePath !== `${BUCKET_NAME}/noAvatar.png`) {
         // const filePath = path.join(process.cwd(), "public", imagePath);
 
         // // ลบไฟล์รูปภาพ
@@ -370,7 +370,7 @@ export const createStudent = async (data: StudentSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/noAvatar.png";
+      data.img = `${BUCKET_NAME}/noAvatar.png`;
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -495,11 +495,11 @@ export const updateStudent = async (data: StudentSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/noAvatar.png";
+        imagePath = `${BUCKET_NAME}/noAvatar.png`;
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
         console.log("imgInData => ", imgInData?.img);
 
@@ -537,7 +537,7 @@ export const updateStudent = async (data: StudentSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/noAvatar.png";
+      imagePath = `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -605,7 +605,7 @@ export const deleteStudent = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/noAvatar.png") {
+      if (imagePath && imagePath !== `${BUCKET_NAME}/noAvatar.png`) {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 
@@ -746,7 +746,7 @@ export const createLostItem = async (data: LostItemSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/imageFound.png";
+      data.img = `${BUCKET_NAME}/imageFound.png`;
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -862,11 +862,11 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/imageFound.png";
+        imagePath = `${BUCKET_NAME}/imageFound.png`;
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/imageFound.png") {
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/imageFound.png`) {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
         console.log("imgInData => ", imgInData?.img);
 
@@ -904,7 +904,7 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/imageFound.png";
+      imagePath = `${BUCKET_NAME}/imageFound.png`;
     }
 
     // Update Data
@@ -953,7 +953,7 @@ export const deleteLostItem = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/imageFound.png") {
+      if (imagePath && imagePath !== `${BUCKET_NAME}/imageFound.png`) {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 
@@ -1043,7 +1043,7 @@ export const createUser = async (data: UserSchema) => {
   try {
     //Image
     if (!data.img) {
-      data.img = "/noAvatar.png";
+      data.img = `${BUCKET_NAME}/noAvatar.png`;
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
@@ -1157,11 +1157,11 @@ export const updateUser = async (data: UserSchema, id: number) => {
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/noAvatar.png";
+        imagePath = `${BUCKET_NAME}/noAvatar.png`;
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
 
         try {
@@ -1197,7 +1197,7 @@ export const updateUser = async (data: UserSchema, id: number) => {
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/noAvatar.png";
+      imagePath = `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -1277,11 +1277,11 @@ export const updateUserNonPassword = async (
         await fs.access(filePath);
       } catch (err: unknown) {
         // use default image
-        imagePath = "/noAvatar.png";
+        imagePath = `${BUCKET_NAME}/noAvatar.png`;
       }
     } else if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== "/noAvatar.png") {
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
         const filePath = path.join(process.cwd(), "public", imgInData?.img);
 
         try {
@@ -1317,7 +1317,7 @@ export const updateUserNonPassword = async (
       imagePath = newFilePath;
     } else {
       // use default image
-      imagePath = "/noAvatar.png";
+      imagePath = `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -1387,7 +1387,7 @@ export const deleteUser = async (data: FormData) => {
       // ถ้ามีรูปภาพในฟิลด์ img
       const imagePath = imgFile.img;
 
-      if (imagePath && imagePath !== "/noAvatar.png") {
+      if (imagePath && imagePath !== `${BUCKET_NAME}/noAvatar.png`) {
         // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
         const filePath = path.join(process.cwd(), "public", imagePath);
 

@@ -5,7 +5,7 @@ import Table from "@/components/Table";
 import TableFilter from "@/components/TableFilter";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { ITEM_PER_PAGE } from "@/lib/settings";
+import { BUCKET_NAME, ITEM_PER_PAGE } from "@/lib/settings";
 import { ItemType, LostItem, LostStatus, Prisma, Student, Teacher, User, UserRole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -86,7 +86,7 @@ const LostItemListPage = async ({
     >
       <td className="flex items-center gap-4 p-4">
         <Image
-          src={item.img || "/noAvatar.png"}
+          src={item.img || `${BUCKET_NAME}/noAvatar.png`}
           alt=""
           width={40}
           height={40}
