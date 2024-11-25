@@ -4,7 +4,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { BUCKET_NAME, ITEM_PER_PAGE } from "@/lib/settings";
+import { BUCKET_NAME, ITEM_PER_PAGE, SUPABASE_IMAGE_URL } from "@/lib/settings";
 import { Prisma, Student, UserRole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -42,7 +42,7 @@ const StudentListPage = async ({ searchParams }: { searchParams: { [key: string]
         >
             <td className="flex items-center gap-4 p-4">
                 <Image
-                    src={item.img || `${BUCKET_NAME}/noAvatar.png`}
+                    src={SUPABASE_IMAGE_URL + item.img || `${BUCKET_NAME}/noAvatar.png`}
                     alt=""
                     width={40}
                     height={40}

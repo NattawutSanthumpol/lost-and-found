@@ -1,6 +1,6 @@
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import CountChartContainer from "@/components/CountChartContainer";
-import FinanceChart from "@/components/FinanceChart";
+import FinanceChartContainer from "@/components/FinanceChartContainer";
 
 const AdminPage = () => {
   return (
@@ -26,7 +26,7 @@ const AdminPage = () => {
         {/* BOTTOM CHART */}
         <div className="w-full flex flex-row gap-4">
           <div className="w-full h-[450px]">
-            <FinanceChart />
+            <FinanceChartContainer />
           </div>
           {/* <div className="w-full lg:w-1/5 h-[450px] flex flex-col gap-y-5">
             <UserCard type={LostStatus.FOUND} />

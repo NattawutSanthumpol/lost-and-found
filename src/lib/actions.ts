@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use server";
 
 import path from "path";
@@ -59,13 +58,13 @@ export const createTeacher = async (data: TeacherSchema) => {
           upsert: true,
         });
 
-        if (error) {
-          return {
-            success: false,
-            error: true,
-            message: `Update Image Error : ${error}`,
-          };
-        }
+      if (error) {
+        return {
+          success: false,
+          error: true,
+          message: `Update Image Error : ${error}`,
+        };
+      }
 
       data.img = uploadedFile?.fullPath;
     }
@@ -220,9 +219,9 @@ export const updateTeacher = async (data: TeacherSchema, id: number) => {
     if (data.img !== imgInData?.img && data.img) {
       // Delete Old Image from Supabase if necessary
       if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
-        const oldFilePath = imgInData.img.split('/').pop();
+        const oldFilePath = imgInData.img.split("/").pop();
         const { error: deleteError } = await supabase.storage
-          .from(BUCKET_NAME)  // Ensure you are using the correct Supabase bucket
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
           .remove([`teacher/${oldFilePath}`]);
 
         if (deleteError) {
@@ -313,7 +312,7 @@ export const deleteTeacher = async (data: FormData) => {
 
   // ตรวจสอบว่าค่า id เป็น null หรือไม่
   if (!id || isNaN(Number(id))) {
-    return { success: false, error: true };
+    return { success: false, error: true, message: "ID is Not Null" };
   }
 
   try {
@@ -333,14 +332,17 @@ export const deleteTeacher = async (data: FormData) => {
         // await unlink(filePath);
         // console.log(`File deleted: ${filePath}`);
 
-        const filePath = imagePath.split('/').pop(); // Get file name from path
+        const filePath = imagePath.split("/").pop(); // Get file name from path
         // ลบไฟล์ภาพจาก Supabase Storage
         const { error: deleteError } = await supabase.storage
-          .from(BUCKET_NAME)  // Ensure you are using the correct Supabase bucket
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
           .remove([`teacher/${filePath}`]);
 
         if (deleteError) {
-          console.error("Error deleting image from Supabase:", deleteError.message);
+          console.error(
+            "Error deleting image from Supabase:",
+            deleteError.message
+          );
         } else {
           console.log(`Image deleted: ${filePath}`);
         }
@@ -353,7 +355,7 @@ export const deleteTeacher = async (data: FormData) => {
       },
     });
 
-    return { success: true, error: false };
+    return { success: true, error: false, message: "" };
   } catch (err: unknown) {
     return {
       success: false,
@@ -374,25 +376,41 @@ export const createStudent = async (data: StudentSchema) => {
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
-      const timestamp = Date.now();
 
       // Check the file type from the base64 header
+      const timestamp = Date.now();
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `student_${timestamp}.${fileExtension}`; // Construct new filename
       const filePath = `/uploads/student/${filename}`;
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/student");
-      await mkdir(uploadDir, { recursive: true });
+      // // Ensure the uploads directory exists
+      // const uploadDir = path.join(process.cwd(), "public/uploads/student");
+      // await mkdir(uploadDir, { recursive: true });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      // // Write the file to the specified directory (public/uploads) with the modified filename
+      // await writeFile(path.join(uploadDir, filename), buffer);
 
-      data.img = filePath;
+      // data.img = filePath;
+
+      // Upload file to Supabase Storage
+      const { data: uploadedFile, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`student/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: true,
+          message: `Update Image Error : ${error}`,
+        };
+      }
+
+      data.img = uploadedFile?.fullPath;
     }
 
     // Insert to db
@@ -481,66 +499,112 @@ export const updateStudent = async (data: StudentSchema, id: number) => {
     let imagePath = data.img;
     const imgInData = await prisma.student.findUnique({ where: { id } });
 
-    // Check Image in Folder
-    if (data.img === imgInData?.img && data.img) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "student",
-        path.basename(data.img)
-      );
+    // // Check Image in Folder (Upload in Local)
+    // if (data.img === imgInData?.img && data.img) {
+    //   const filePath = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "student",
+    //     path.basename(data.img)
+    //   );
 
-      try {
-        await fs.access(filePath);
-      } catch (err: unknown) {
-        // use default image
-        imagePath = `${BUCKET_NAME}/noAvatar.png`;
-      }
-    } else if (data.img !== imgInData?.img && data.img) {
-      // Delete Old Image
+    //   try {
+    //     await fs.access(filePath);
+    //   } catch (err: unknown) {
+    //     // use default image
+    //     imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    //   }
+    // } else if (data.img !== imgInData?.img && data.img) {
+    //   // Delete Old Image
+    //   if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
+    //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
+    //     console.log("imgInData => ", imgInData?.img);
+
+    //     try {
+    //       console.log("New Upload =>", filePath);
+    //       await fs.access(filePath);
+    //       await unlink(filePath);
+    //     } catch (err) {
+    //       console.error("Error : ", err);
+    //     }
+    //   }
+
+    //   // New Upload Image
+    //   // Convert the file data to a Buffer
+    //   const base64Data = data.img.split(",")[1];
+
+    //   const buffer = Buffer.from(base64Data, "base64");
+    //   // Replace spaces in the file name with underscores
+    //   const timestamp = Date.now();
+
+    //   // Check the file type from the base64 header
+    //   const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+    //   const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+    //   const filename = `student_${timestamp}.${fileExtension}`; // Construct new filename
+    //   const newFilePath = `/uploads/student/${filename}`;
+    //   console.log("newFilePath => ", newFilePath);
+
+    //   // Ensure the uploads directory exists
+    //   const uploadDir = path.join(process.cwd(), "public/uploads/student");
+    //   await mkdir(uploadDir, { recursive: true });
+
+    //   // Write the file to the specified directory (public/uploads) with the modified filename
+    //   await writeFile(path.join(uploadDir, filename), buffer);
+
+    //   imagePath = newFilePath;
+    // } else {
+    //   // use default image
+    //   imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    // }
+
+    // use Supabase
+    // Check Image Change
+    if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image from Supabase if necessary
       if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
-        const filePath = path.join(process.cwd(), "public", imgInData?.img);
-        console.log("imgInData => ", imgInData?.img);
+        const oldFilePath = imgInData.img.split("/").pop();
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`student/${oldFilePath}`]);
 
-        try {
-          console.log("New Upload =>", filePath);
-          await fs.access(filePath);
-          await unlink(filePath);
-        } catch (err) {
-          console.error("Error : ", err);
+        if (deleteError) {
+          console.error("Error deleting old image:", deleteError.message);
         }
       }
 
-      // New Upload Image
-      // Convert the file data to a Buffer
+      // Upload New Image to Supabase
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
       const timestamp = Date.now();
-
-      // Check the file type from the base64 header
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `student_${timestamp}.${fileExtension}`; // Construct new filename
-      const newFilePath = `/uploads/student/${filename}`;
-      console.log("newFilePath => ", newFilePath);
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/student");
-      await mkdir(uploadDir, { recursive: true });
+      // Upload to Supabase Storage
+      const { data: uploadedFile, error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`student/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      if (uploadError) {
+        return {
+          success: false,
+          error: true,
+          message: `Image upload error: ${uploadError.message}`,
+        };
+      }
 
-      imagePath = newFilePath;
+      // Set the path to the new image
+      imagePath = uploadedFile?.fullPath || `${BUCKET_NAME}/noAvatar.png`;
     } else {
-      // use default image
-      imagePath = `${BUCKET_NAME}/noAvatar.png`;
+      // No image change, keep existing image or use default image
+      imagePath = imgInData?.img || `${BUCKET_NAME}/noAvatar.png`;
     }
 
-    // Update Data
+    // Update Data in Database
     await prisma.student.update({
       where: {
         id: id,
@@ -606,12 +670,27 @@ export const deleteStudent = async (data: FormData) => {
       const imagePath = imgFile.img;
 
       if (imagePath && imagePath !== `${BUCKET_NAME}/noAvatar.png`) {
-        // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
-        const filePath = path.join(process.cwd(), "public", imagePath);
+        // // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
+        // const filePath = path.join(process.cwd(), "public", imagePath);
 
-        // ลบไฟล์รูปภาพ
-        await unlink(filePath);
-        console.log(`File deleted: ${filePath}`);
+        // // ลบไฟล์รูปภาพ
+        // await unlink(filePath);
+        // console.log(`File deleted: ${filePath}`);
+
+        const filePath = imagePath.split("/").pop(); // Get file name from path
+        // ลบไฟล์ภาพจาก Supabase Storage
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`student/${filePath}`]);
+
+        if (deleteError) {
+          console.error(
+            "Error deleting image from Supabase:",
+            deleteError.message
+          );
+        } else {
+          console.log(`Image deleted: ${filePath}`);
+        }
       }
     }
 
@@ -719,10 +798,6 @@ export const deleteItemType = async (data: FormData) => {
   }
 
   try {
-    const imgFile = await prisma.itemType.findUnique({
-      where: { id: Number(id) },
-    });
-
     await prisma.itemType.delete({
       where: {
         id: Number(id),
@@ -750,25 +825,41 @@ export const createLostItem = async (data: LostItemSchema) => {
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
-      const timestamp = Date.now();
 
       // Check the file type from the base64 header
+      const timestamp = Date.now();
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `lostItem_${timestamp}.${fileExtension}`; // Construct new filename
       const filePath = `/uploads/lostItem/${filename}`;
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/lostItem");
-      await mkdir(uploadDir, { recursive: true });
+      // // Ensure the uploads directory exists
+      // const uploadDir = path.join(process.cwd(), "public/uploads/lostItem");
+      // await mkdir(uploadDir, { recursive: true });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      // // Write the file to the specified directory (public/uploads) with the modified filename
+      // await writeFile(path.join(uploadDir, filename), buffer);
 
-      data.img = filePath;
+      // data.img = filePath;
+
+      // Upload file to Supabase Storage
+      const { data: uploadedFile, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`lostItem/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: true,
+          message: `Update Image Error : ${error}`,
+        };
+      }
+
+      data.img = uploadedFile?.fullPath;
     }
 
     console.log(data.foundDate);
@@ -825,6 +916,7 @@ export const getAllLostItems = async () => {
         teacher: true,
         user: true,
       },
+      orderBy: { id: "asc" },
     });
 
     if (!result) {
@@ -848,63 +940,109 @@ export const updateLostItem = async (data: LostItemSchema, id: number) => {
     let imagePath = data.img;
     const imgInData = await prisma.lostItem.findUnique({ where: { id } });
 
-    // Check Image in Folder
-    if (data.img === imgInData?.img && data.img) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "lostItem",
-        path.basename(data.img)
-      );
+    // // Check Image in Folder
+    // if (data.img === imgInData?.img && data.img) {
+    //   const filePath = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "lostItem",
+    //     path.basename(data.img)
+    //   );
 
-      try {
-        await fs.access(filePath);
-      } catch (err: unknown) {
-        // use default image
-        imagePath = `${BUCKET_NAME}/imageFound.png`;
-      }
-    } else if (data.img !== imgInData?.img && data.img) {
-      // Delete Old Image
-      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/imageFound.png`) {
-        const filePath = path.join(process.cwd(), "public", imgInData?.img);
-        console.log("imgInData => ", imgInData?.img);
+    //   try {
+    //     await fs.access(filePath);
+    //   } catch (err: unknown) {
+    //     // use default image
+    //     imagePath = `${BUCKET_NAME}/imageFound.png`;
+    //   }
+    // } else if (data.img !== imgInData?.img && data.img) {
+    //   // Delete Old Image
+    //   if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/imageFound.png`) {
+    //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
+    //     console.log("imgInData => ", imgInData?.img);
 
-        try {
-          console.log("New Upload =>", filePath);
-          await fs.access(filePath);
-          await unlink(filePath);
-        } catch (err) {
-          console.error("Error : ", err);
+    //     try {
+    //       console.log("New Upload =>", filePath);
+    //       await fs.access(filePath);
+    //       await unlink(filePath);
+    //     } catch (err) {
+    //       console.error("Error : ", err);
+    //     }
+    //   }
+
+    //   // New Upload Image
+    //   // Convert the file data to a Buffer
+    //   const base64Data = data.img.split(",")[1];
+
+    //   const buffer = Buffer.from(base64Data, "base64");
+    //   // Replace spaces in the file name with underscores
+    //   const timestamp = Date.now();
+
+    //   // Check the file type from the base64 header
+    //   const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+    //   const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+    //   const filename = `lostItem_${timestamp}.${fileExtension}`; // Construct new filename
+    //   const newFilePath = `/uploads/lostItem/${filename}`;
+    //   console.log("newFilePath => ", newFilePath);
+
+    //   // Ensure the uploads directory exists
+    //   const uploadDir = path.join(process.cwd(), "public/uploads/lostItem");
+    //   await mkdir(uploadDir, { recursive: true });
+
+    //   // Write the file to the specified directory (public/uploads) with the modified filename
+    //   await writeFile(path.join(uploadDir, filename), buffer);
+
+    //   imagePath = newFilePath;
+    // } else {
+    //   // use default image
+    //   imagePath = `${BUCKET_NAME}/imageFound.png`;
+    // }
+
+    // use Supabase
+    // Check Image Change
+    if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image from Supabase if necessary
+      if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
+        const oldFilePath = imgInData.img.split("/").pop();
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`lostItem/${oldFilePath}`]);
+
+        if (deleteError) {
+          console.error("Error deleting old image:", deleteError.message);
         }
       }
 
-      // New Upload Image
-      // Convert the file data to a Buffer
+      // Upload New Image to Supabase
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
       const timestamp = Date.now();
-
-      // Check the file type from the base64 header
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `lostItem_${timestamp}.${fileExtension}`; // Construct new filename
-      const newFilePath = `/uploads/lostItem/${filename}`;
-      console.log("newFilePath => ", newFilePath);
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/lostItem");
-      await mkdir(uploadDir, { recursive: true });
+      // Upload to Supabase Storage
+      const { data: uploadedFile, error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`lostItem/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      if (uploadError) {
+        return {
+          success: false,
+          error: true,
+          message: `Image upload error: ${uploadError.message}`,
+        };
+      }
 
-      imagePath = newFilePath;
+      // Set the path to the new image
+      imagePath = uploadedFile?.fullPath || `${BUCKET_NAME}/noAvatar.png`;
     } else {
-      // use default image
-      imagePath = `${BUCKET_NAME}/imageFound.png`;
+      // No image change, keep existing image or use default image
+      imagePath = imgInData?.img || `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -954,12 +1092,27 @@ export const deleteLostItem = async (data: FormData) => {
       const imagePath = imgFile.img;
 
       if (imagePath && imagePath !== `${BUCKET_NAME}/imageFound.png`) {
-        // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
-        const filePath = path.join(process.cwd(), "public", imagePath);
+        // // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
+        // const filePath = path.join(process.cwd(), "public", imagePath);
 
-        // ลบไฟล์รูปภาพ
-        await unlink(filePath);
-        console.log(`File deleted: ${filePath}`);
+        // // ลบไฟล์รูปภาพ
+        // await unlink(filePath);
+        // console.log(`File deleted: ${filePath}`);
+
+        const filePath = imagePath.split("/").pop(); // Get file name from path
+        // ลบไฟล์ภาพจาก Supabase Storage
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`lostItem/${filePath}`]);
+
+        if (deleteError) {
+          console.error(
+            "Error deleting image from Supabase:",
+            deleteError.message
+          );
+        } else {
+          console.log(`Image deleted: ${filePath}`);
+        }
       }
     }
 
@@ -1013,7 +1166,7 @@ export const logIn = async (formData: FormData) => {
       username: rawLogIn.username,
       password: rawLogIn.password,
     });
-    console.log("loginResult => ", loginResult);
+    // console.log("loginResult => ", loginResult);
     if (!loginResult) {
       return { error: "Invalid username or password" };
     }
@@ -1047,25 +1200,41 @@ export const createUser = async (data: UserSchema) => {
     } else {
       // Convert the file data to a Buffer
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
-      const timestamp = Date.now();
 
       // Check the file type from the base64 header
+      const timestamp = Date.now();
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
       const filePath = `/uploads/user/${filename}`;
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/user");
-      await mkdir(uploadDir, { recursive: true });
+      // // Ensure the uploads directory exists
+      // const uploadDir = path.join(process.cwd(), "public/uploads/user");
+      // await mkdir(uploadDir, { recursive: true });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      // // Write the file to the specified directory (public/uploads) with the modified filename
+      // await writeFile(path.join(uploadDir, filename), buffer);
 
-      data.img = filePath;
+      // data.img = filePath;
+
+      // Upload file to Supabase Storage
+      const { data: uploadedFile, error } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`user/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (error) {
+        return {
+          success: false,
+          error: true,
+          message: `Update Image Error : ${error}`,
+        };
+      }
+
+      data.img = uploadedFile?.fullPath;
     }
 
     // Insert to db
@@ -1106,7 +1275,7 @@ export const createUser = async (data: UserSchema) => {
       }
     }
 
-    console.log("Unexpected error:", err);
+    // console.log("Unexpected error:", err);
     return {
       success: false,
       error: true,
@@ -1143,61 +1312,107 @@ export const updateUser = async (data: UserSchema, id: number) => {
     let imagePath = data.img;
     const imgInData = await prisma.user.findUnique({ where: { id } });
 
-    // Check Image in Folder
-    if (data.img === imgInData?.img && data.img) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "user",
-        path.basename(data.img)
-      );
+    // // Check Image in Folder
+    // if (data.img === imgInData?.img && data.img) {
+    //   const filePath = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "user",
+    //     path.basename(data.img)
+    //   );
 
-      try {
-        await fs.access(filePath);
-      } catch (err: unknown) {
-        // use default image
-        imagePath = `${BUCKET_NAME}/noAvatar.png`;
-      }
-    } else if (data.img !== imgInData?.img && data.img) {
-      // Delete Old Image
+    //   try {
+    //     await fs.access(filePath);
+    //   } catch (err: unknown) {
+    //     // use default image
+    //     imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    //   }
+    // } else if (data.img !== imgInData?.img && data.img) {
+    //   // Delete Old Image
+    //   if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
+    //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
+
+    //     try {
+    //       await fs.access(filePath);
+    //       await unlink(filePath);
+    //     } catch (err) {
+    //       console.error("Error : ", err);
+    //     }
+    //   }
+
+    //   // New Upload Image
+    //   // Convert the file data to a Buffer
+    //   const base64Data = data.img.split(",")[1];
+
+    //   const buffer = Buffer.from(base64Data, "base64");
+    //   // Replace spaces in the file name with underscores
+    //   const timestamp = Date.now();
+
+    //   // Check the file type from the base64 header
+    //   const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+    //   const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+    //   const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
+    //   const newFilePath = `/uploads/user/${filename}`;
+    //   console.log("newFilePath => ", newFilePath);
+
+    //   // Ensure the uploads directory exists
+    //   const uploadDir = path.join(process.cwd(), "public/uploads/user");
+    //   await mkdir(uploadDir, { recursive: true });
+
+    //   // Write the file to the specified directory (public/uploads) with the modified filename
+    //   await writeFile(path.join(uploadDir, filename), buffer);
+
+    //   imagePath = newFilePath;
+    // } else {
+    //   // use default image
+    //   imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    // }
+
+    // use Supabase
+    // Check Image Change
+    if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image from Supabase if necessary
       if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
-        const filePath = path.join(process.cwd(), "public", imgInData?.img);
+        const oldFilePath = imgInData.img.split("/").pop();
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`user/${oldFilePath}`]);
 
-        try {
-          await fs.access(filePath);
-          await unlink(filePath);
-        } catch (err) {
-          console.error("Error : ", err);
+        if (deleteError) {
+          console.error("Error deleting old image:", deleteError.message);
         }
       }
 
-      // New Upload Image
-      // Convert the file data to a Buffer
+      // Upload New Image to Supabase
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
       const timestamp = Date.now();
-
-      // Check the file type from the base64 header
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
-      const newFilePath = `/uploads/user/${filename}`;
-      console.log("newFilePath => ", newFilePath);
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/user");
-      await mkdir(uploadDir, { recursive: true });
+      // Upload to Supabase Storage
+      const { data: uploadedFile, error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`user/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      if (uploadError) {
+        return {
+          success: false,
+          error: true,
+          message: `Image upload error: ${uploadError.message}`,
+        };
+      }
 
-      imagePath = newFilePath;
+      // Set the path to the new image
+      imagePath = uploadedFile?.fullPath || `${BUCKET_NAME}/noAvatar.png`;
     } else {
-      // use default image
-      imagePath = `${BUCKET_NAME}/noAvatar.png`;
+      // No image change, keep existing image or use default image
+      imagePath = imgInData?.img || `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -1212,7 +1427,7 @@ export const updateUser = async (data: UserSchema, id: number) => {
         lastName: data.lastName,
         email: data.email || null,
         phone: data.phone || null,
-        img: data.img || null,
+        img: imagePath,
         sex: data.sex,
         role: data.role,
       },
@@ -1263,61 +1478,107 @@ export const updateUserNonPassword = async (
     let imagePath = data.img;
     const imgInData = await prisma.user.findUnique({ where: { id } });
 
-    // Check Image in Folder
-    if (data.img === imgInData?.img && data.img) {
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "user",
-        path.basename(data.img)
-      );
+    // // Check Image in Folder
+    // if (data.img === imgInData?.img && data.img) {
+    //   const filePath = path.join(
+    //     process.cwd(),
+    //     "public",
+    //     "uploads",
+    //     "user",
+    //     path.basename(data.img)
+    //   );
 
-      try {
-        await fs.access(filePath);
-      } catch (err: unknown) {
-        // use default image
-        imagePath = `${BUCKET_NAME}/noAvatar.png`;
-      }
-    } else if (data.img !== imgInData?.img && data.img) {
-      // Delete Old Image
+    //   try {
+    //     await fs.access(filePath);
+    //   } catch (err: unknown) {
+    //     // use default image
+    //     imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    //   }
+    // } else if (data.img !== imgInData?.img && data.img) {
+    //   // Delete Old Image
+    //   if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
+    //     const filePath = path.join(process.cwd(), "public", imgInData?.img);
+
+    //     try {
+    //       await fs.access(filePath);
+    //       await unlink(filePath);
+    //     } catch (err) {
+    //       console.error("Error : ", err);
+    //     }
+    //   }
+
+    //   // New Upload Image
+    //   // Convert the file data to a Buffer
+    //   const base64Data = data.img.split(",")[1];
+
+    //   const buffer = Buffer.from(base64Data, "base64");
+    //   // Replace spaces in the file name with underscores
+    //   const timestamp = Date.now();
+
+    //   // Check the file type from the base64 header
+    //   const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
+    //   const fileExtension = mimeType.split("/")[1]; // e.g., "png"
+    //   const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
+    //   const newFilePath = `/uploads/user/${filename}`;
+    //   console.log("newFilePath => ", newFilePath);
+
+    //   // Ensure the uploads directory exists
+    //   const uploadDir = path.join(process.cwd(), "public/uploads/user");
+    //   await mkdir(uploadDir, { recursive: true });
+
+    //   // Write the file to the specified directory (public/uploads) with the modified filename
+    //   await writeFile(path.join(uploadDir, filename), buffer);
+
+    //   imagePath = newFilePath;
+    // } else {
+    //   // use default image
+    //   imagePath = `${BUCKET_NAME}/noAvatar.png`;
+    // }
+
+    // use Supabase
+    // Check Image Change
+    if (data.img !== imgInData?.img && data.img) {
+      // Delete Old Image from Supabase if necessary
       if (imgInData?.img && imgInData?.img !== `${BUCKET_NAME}/noAvatar.png`) {
-        const filePath = path.join(process.cwd(), "public", imgInData?.img);
+        const oldFilePath = imgInData.img.split("/").pop();
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`user/${oldFilePath}`]);
 
-        try {
-          await fs.access(filePath);
-          await unlink(filePath);
-        } catch (err) {
-          console.error("Error : ", err);
+        if (deleteError) {
+          console.error("Error deleting old image:", deleteError.message);
         }
       }
 
-      // New Upload Image
-      // Convert the file data to a Buffer
+      // Upload New Image to Supabase
       const base64Data = data.img.split(",")[1];
-
       const buffer = Buffer.from(base64Data, "base64");
-      // Replace spaces in the file name with underscores
       const timestamp = Date.now();
-
-      // Check the file type from the base64 header
       const mimeType = data.img.split(";")[0].split(":")[1]; // e.g., "image/png"
       const fileExtension = mimeType.split("/")[1]; // e.g., "png"
       const filename = `user_${timestamp}.${fileExtension}`; // Construct new filename
-      const newFilePath = `/uploads/user/${filename}`;
-      console.log("newFilePath => ", newFilePath);
 
-      // Ensure the uploads directory exists
-      const uploadDir = path.join(process.cwd(), "public/uploads/user");
-      await mkdir(uploadDir, { recursive: true });
+      // Upload to Supabase Storage
+      const { data: uploadedFile, error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .upload(`user/${filename}`, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Write the file to the specified directory (public/uploads) with the modified filename
-      await writeFile(path.join(uploadDir, filename), buffer);
+      if (uploadError) {
+        return {
+          success: false,
+          error: true,
+          message: `Image upload error: ${uploadError.message}`,
+        };
+      }
 
-      imagePath = newFilePath;
+      // Set the path to the new image
+      imagePath = uploadedFile?.fullPath || `${BUCKET_NAME}/noAvatar.png`;
     } else {
-      // use default image
-      imagePath = `${BUCKET_NAME}/noAvatar.png`;
+      // No image change, keep existing image or use default image
+      imagePath = imgInData?.img || `${BUCKET_NAME}/noAvatar.png`;
     }
 
     // Update Data
@@ -1331,7 +1592,7 @@ export const updateUserNonPassword = async (
         lastName: data.lastName,
         email: data.email || null,
         phone: data.phone || null,
-        img: data.img || null,
+        img: imagePath,
         sex: data.sex,
         role: data.role,
       },
@@ -1388,12 +1649,27 @@ export const deleteUser = async (data: FormData) => {
       const imagePath = imgFile.img;
 
       if (imagePath && imagePath !== `${BUCKET_NAME}/noAvatar.png`) {
-        // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
-        const filePath = path.join(process.cwd(), "public", imagePath);
+        // // สร้าง path ของไฟล์จาก base URL ของการอัปโหลด
+        // const filePath = path.join(process.cwd(), "public", imagePath);
 
-        // ลบไฟล์รูปภาพ
-        await unlink(filePath);
-        console.log(`File deleted: ${filePath}`);
+        // // ลบไฟล์รูปภาพ
+        // await unlink(filePath);
+        // console.log(`File deleted: ${filePath}`);
+
+        const filePath = imagePath.split("/").pop(); // Get file name from path
+        // ลบไฟล์ภาพจาก Supabase Storage
+        const { error: deleteError } = await supabase.storage
+          .from(BUCKET_NAME) // Ensure you are using the correct Supabase bucket
+          .remove([`user/${filePath}`]);
+
+        if (deleteError) {
+          console.error(
+            "Error deleting image from Supabase:",
+            deleteError.message
+          );
+        } else {
+          console.log(`Image deleted: ${filePath}`);
+        }
       }
     }
 

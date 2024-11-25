@@ -34,7 +34,8 @@ declare module "@auth/core/types" {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 8 * 60 * 60 },
+  jwt: { maxAge: 8 * 60 * 60 },
   providers: [
     Credentials({
       name: "Credentials",

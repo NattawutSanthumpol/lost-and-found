@@ -1,6 +1,7 @@
 "use client";
 
 import { logOut } from "@/lib/actions";
+import { SUPABASE_IMAGE_URL, BUCKET_NAME } from "@/lib/settings";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,7 +33,6 @@ const Navbar = () => {
     await update();
     window.location.href = "/"
   };
-
 
   useEffect(() => {
     document.addEventListener("click", handleClickOutside); // เพิ่ม Event Listener
@@ -80,7 +80,7 @@ const Navbar = () => {
             </div>
             <div ref={dropdownRef}>
               <Image
-                src={session?.user.image || "/images/other/avatar.png"}
+                src={SUPABASE_IMAGE_URL + session?.user.image || `${BUCKET_NAME}/noAvatar.png`}
                 alt=""
                 width={50}
                 height={50}

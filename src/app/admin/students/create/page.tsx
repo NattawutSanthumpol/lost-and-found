@@ -33,6 +33,7 @@ const CreateStudentPage = () => {
         if (result.success) {
             toast.success("Student created successfully!");
             router.push("/admin/students");
+            router.refresh();
         } else if (result.error) {
             toast.error(result.message);
         } else {

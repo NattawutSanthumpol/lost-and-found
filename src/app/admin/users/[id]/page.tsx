@@ -14,7 +14,7 @@ import { toast } from "react-toastify";
 import { User, UserRole, UserSex } from "@prisma/client";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { BUCKET_NAME } from "@/lib/settings";
+import { BUCKET_NAME, SUPABASE_IMAGE_URL } from "@/lib/settings";
 
 const EditUserPage = () => {
     const router = useRouter();
@@ -27,6 +27,7 @@ const EditUserPage = () => {
             : 0;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [image, setImage] = useState<string>("");
+    const [imageTemp, setImageTemp] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [isEditPassword, setIsEditPassword] = useState(false);
 
@@ -97,7 +98,10 @@ const EditUserPage = () => {
             const fileType = file.type.split("/")[0];
             if (fileType === "image") {
                 const reader = new FileReader();
-                reader.onload = () => setImage(reader.result as string);
+                reader.onload = () => {
+                    setImage(reader.result as string);
+                    setImageTemp(reader.result as string);
+                };
                 reader.readAsDataURL(file);
             } else {
                 toast.error("Please select an image file.");
@@ -123,7 +127,12 @@ const EditUserPage = () => {
                         <div className="w-48 h-48 border rounded-full overflow-hidden">
                             {image ? (
                                 <Image
-                                    src={image || `${BUCKET_NAME}/noAvatar.png`}
+                                    src={
+                                        imageTemp.startsWith("data:image")
+                                            ? imageTemp
+                                            : SUPABASE_IMAGE_URL + image ||
+                                            `${BUCKET_NAME}/noAvatar.png`
+                                    }
                                     alt="Uploaded"
                                     className="w-full h-full rounded-full object-cover"
                                     width={500}

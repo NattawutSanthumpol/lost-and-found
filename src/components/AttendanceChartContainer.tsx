@@ -1,3 +1,4 @@
+import prisma from "@/lib/prisma";
 import AttendanceChart from "./AttendanceChart";
 
 const AttendanceChartContainer = async () => {
@@ -8,51 +9,51 @@ const AttendanceChartContainer = async () => {
     const lastMonday = new Date(today);
     lastMonday.setDate(today.getDate() - daysSinceMonday);
 
-    //   const resData = await prisma.attendance.findMany({
-    //     where: {
-    //       date: {
-    //         gte: lastMonday,
-    //       },
-    //     },
-    //     select: {
-    //       date: true,
-    //       present: true,
-    //     },
-    //   });
+      const resData = await prisma.lostItem.findMany({
+        where: {
+          foundDate: {
+            gte: lastMonday,
+          },
+        },
+        select: {
+          foundDate: true,
+          status: true,
+        },
+      });
 
-    // console.log(data)
+    // console.log(resData)
 
     const nextFriday = new Date(lastMonday);
     nextFriday.setDate(lastMonday.getDate() + 4); // วันศุกร์คือ +4 จากวันจันทร์
 
-    // ฟังก์ชันสุ่มวันที่เฉพาะวันจันทร์ถึงศุกร์
-    const getRandomWeekday = (start: Date, end: Date) => {
-        let randomDate: Date;
+    // // ฟังก์ชันสุ่มวันที่เฉพาะวันจันทร์ถึงศุกร์
+    // const getRandomWeekday = (start: Date, end: Date) => {
+    //     let randomDate: Date;
 
-        do {
-            randomDate = new Date(
-                start.getTime() + Math.random() * (end.getTime() - start.getTime())
-            );
-        } while (randomDate.getDay() === 0 || randomDate.getDay() === 6); // กำจัดวันเสาร์-อาทิตย์
+    //     do {
+    //         randomDate = new Date(
+    //             start.getTime() + Math.random() * (end.getTime() - start.getTime())
+    //         );
+    //     } while (randomDate.getDay() === 0 || randomDate.getDay() === 6); // กำจัดวันเสาร์-อาทิตย์
 
-        return randomDate;
-    };
+    //     return randomDate;
+    // };
 
-    // ฟังก์ชันสุ่มค่าต่าง ๆ
-    const getRandomBoolean = () => Math.random() < 0.5;
-    const getRandomStudentId = () => `student${Math.floor(Math.random() * 30) + 1}`;
+    // // ฟังก์ชันสุ่มค่าต่าง ๆ
+    // const getRandomBoolean = () => Math.random() < 0.5;
+    // const getRandomStudentId = () => `student${Math.floor(Math.random() * 30) + 1}`;
 
-    // สร้าง resData
-    const resData = Array.from({ length: 60 }, (_, index) => {
-        const randomDate = getRandomWeekday(lastMonday, nextFriday);
+    // // สร้าง resData
+    // const resData = Array.from({ length: 60 }, (_, index) => {
+    //     const randomDate = getRandomWeekday(lastMonday, nextFriday);
 
-        return {
-            id: index + 1,
-            date: randomDate.toISOString(), // เก็บวันที่ในรูปแบบ ISO String
-            present: getRandomBoolean(),
-            studentId: getRandomStudentId(),
-        };
-    });
+    //     return {
+    //         id: index + 1,
+    //         date: randomDate.toISOString(), // เก็บวันที่ในรูปแบบ ISO String
+    //         present: getRandomBoolean(),
+    //         studentId: getRandomStudentId(),
+    //     };
+    // });
 
 
     // const resData = [
@@ -102,13 +103,13 @@ const AttendanceChartContainer = async () => {
     };
 
     resData.forEach((item) => {
-        const itemDate = new Date(item.date);
+        const itemDate = new Date(item.foundDate);
         const dayOfWeek = itemDate.getDay();
 
         if (dayOfWeek >= 1 && dayOfWeek <= 5) {
             const dayName = daysOfWeek[dayOfWeek - 1];
 
-            if (item.present) {
+            if (item.status) {
                 attendanceMap[dayName].found += 1;
             } else {
                 attendanceMap[dayName].returned += 1;

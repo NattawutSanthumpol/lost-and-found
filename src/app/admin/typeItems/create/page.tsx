@@ -30,6 +30,7 @@ const CreateItemTypePage = () => {
         if (result.success) {
             toast.success("Teacher created successfully!");
             router.push("/admin/typeItems");
+            router.refresh();
         } else if (result.error) {
             toast.error(result.message);
         } else {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -10,7 +9,7 @@ const Form = ({
   id,
   setOpen,
 }: {
-  formAction: (data: FormData) => Promise<{ success: boolean; error: boolean }>;
+  formAction: (data: FormData) => Promise<{ success: boolean; error: boolean, message?: string }>;
   table: "teacher" | "student" | "itemType" | "lostItem" | "user";
   id: number | string | undefined;
   setOpen: (state: boolean) => void;
@@ -30,8 +29,10 @@ const Form = ({
       toast.success(`${table} has been deleted!`);
       setOpen(false);
       router.refresh();
-    } else {
-      toast.error("Failed to delete the data.");
+    }
+    else {
+      // toast.error("Failed to delete the data.");
+      toast.error(result.message || "Failed to delete the data.");
     }
   };
 

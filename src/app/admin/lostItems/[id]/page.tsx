@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import Image from "next/image";
 import {
-    createLostItem,
     getAllItemType,
     getAllStudent,
     getAllTeacher,
@@ -19,6 +18,7 @@ import Link from "next/link";
 import { ItemType, LostItem, LostStatus, Student, Teacher } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import Select from "react-select";
+import { SUPABASE_IMAGE_URL, BUCKET_NAME } from "@/lib/settings";
 
 const EditLostItem = () => {
     const router = useRouter();
@@ -26,6 +26,7 @@ const EditLostItem = () => {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [image, setImage] = useState<string>("");
+    const [imageTemp, setImageTemp] = useState<string>("");
     const [fDate, setFDate] = useState<Date>(new Date);
 
     const [itemTypes, setItemTypes] = useState<{ value: number; label: string }[]>([]);
@@ -166,13 +167,18 @@ const EditLostItem = () => {
             const fileType = file.type.split("/")[0];
             if (fileType === "image") {
                 const reader = new FileReader();
-                reader.onload = () => setImage(reader.result as string);
+                reader.onload = () => {
+                    setImage(reader.result as string);
+                    setImageTemp(reader.result as string);
+                };
                 reader.readAsDataURL(file);
             } else {
                 toast.error("Please select an image file.");
             }
         }
     };
+
+    if (loading) return <p>Loading...</p>;
 
     return (
         <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -192,7 +198,12 @@ const EditLostItem = () => {
                         <div className="w-48 h-48 border rounded-full overflow-hidden">
                             {image ? (
                                 <Image
-                                    src={image}
+                                    src={
+                                        imageTemp.startsWith("data:image")
+                                            ? imageTemp
+                                            : SUPABASE_IMAGE_URL + image ||
+                                            `${BUCKET_NAME}/imageFound.png`
+                                    }
                                     alt="Uploaded"
                                     className="w-full h-full rounded-full object-cover"
                                     width={500}

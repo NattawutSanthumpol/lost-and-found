@@ -54,6 +54,7 @@ const EditTypeItemPage = () => {
         if (result.success) {
           toast.success("Teacher updated successfully!");
           router.push("/admin/typeItems");
+          router.refresh();
         } else {
           toast.error("Failed to update teacher. Please try again.");
         }

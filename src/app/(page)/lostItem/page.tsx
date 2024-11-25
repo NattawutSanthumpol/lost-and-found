@@ -1,11 +1,12 @@
 "use client";
 
 import { getAllLostItems } from "@/lib/actions";
-import { ItemType, LostItem, Student, Teacher, User } from "@prisma/client";
+import { ItemType, LostItem, LostStatus, Student, Teacher, User } from "@prisma/client";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Image from "next/image";
 import Loading from "../Loading";
+import { SUPABASE_IMAGE_URL, BUCKET_NAME } from "@/lib/settings";
 
 type LostItemList = LostItem & { itemType: ItemType } & { student: Student } & { teacher: Teacher } & { user: User }
 
@@ -22,8 +23,8 @@ const LostItemPage = () => {
         const getItems = await getAllLostItems();
         // console.log(getItems);
         if (getItems) {
-          setItems(getItems);
-          setFilteredItems(getItems)
+          setItems(getItems.filter(x => x.status === LostStatus.FOUND.toString()));
+          setFilteredItems(getItems.filter(x => x.status === LostStatus.FOUND.toString()))
         }
       } catch (error) {
         toast.error(`Failed to fetch item type : ${error}`);
@@ -76,7 +77,7 @@ const LostItemPage = () => {
                   >
                     {/* Image */}
                     <Image
-                      src={item.img || "/imageFound.png"}
+                      src={SUPABASE_IMAGE_URL + item.img || `${BUCKET_NAME}/imageFound.png`}
                       alt={item.itemName}
                       className="w-full h-50 object-cover p-6"
                       width={500}
