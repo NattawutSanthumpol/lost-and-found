@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import ExportExcel from "@/components/ExportExcel";
 import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -31,11 +32,11 @@ const TeacherListPage = async ({
     },
     ...(role === UserRole.ADMIN.toString()
       ? [
-        {
-          header: "Actions",
-          accessor: "action",
-        },
-      ]
+          {
+            header: "Actions",
+            accessor: "action",
+          },
+        ]
       : []),
   ];
 
@@ -53,7 +54,9 @@ const TeacherListPage = async ({
           className="xl:block w-10 h-10 rounded-full object-cover"
         />
         <div className="flex flex-col">
-          <h3 className="font-semibold">{item.firstName} {item.lastName}</h3>
+          <h3 className="font-semibold">
+            {item.firstName} {item.lastName}
+          </h3>
           <p className="text-xs text-gray-500">{item?.email}</p>
         </div>
       </td>
@@ -63,7 +66,12 @@ const TeacherListPage = async ({
         <div className="flex items-center gap-2">
           <Link href={`/admin/teachers/${item.id}`}>
             <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky">
-              <Image src="/images/other/edit.png" alt="" width={16} height={16} />
+              <Image
+                src="/images/other/edit.png"
+                alt=""
+                width={16}
+                height={16}
+              />
             </button>
           </Link>
           {role === "ADMIN" && (
@@ -71,7 +79,6 @@ const TeacherListPage = async ({
             //   <Image src="/images/other/delete.png" alt="" width={16} height={16} />
             // </button>
             <FormContainer table="teacher" id={item.id} />
-
           )}
         </div>
       </td>
@@ -106,11 +113,11 @@ const TeacherListPage = async ({
     prisma.teacher.findMany({
       where: query,
       take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1)
+      skip: ITEM_PER_PAGE * (p - 1),
     }),
-    prisma.teacher.count({ where: query })
-  ])
-  
+    prisma.teacher.count({ where: query }),
+  ]);
+
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
@@ -122,10 +129,16 @@ const TeacherListPage = async ({
             {role === "ADMIN" && (
               <Link href={`/admin/teachers/create`}>
                 <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaYellow">
-                  <Image src="/images/other/plus.png" alt="" width={16} height={16} />
+                  <Image
+                    src="/images/other/plus.png"
+                    alt=""
+                    width={16}
+                    height={16}
+                  />
                 </button>
               </Link>
             )}
+            <ExportExcel data={data.map(val => ({ ...val, img: val.img ? SUPABASE_IMAGE_URL + val.img : null }))} fileName="Teachers" sheetName="Teachers" />
           </div>
         </div>
       </div>
@@ -134,7 +147,7 @@ const TeacherListPage = async ({
       {/* PAGINATION */}
       <Pagination page={p} count={count} />
     </div>
-  )
-}
+  );
+};
 
-export default TeacherListPage
+export default TeacherListPage;
